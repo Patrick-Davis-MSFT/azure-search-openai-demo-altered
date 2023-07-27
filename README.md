@@ -3,6 +3,26 @@
 * Updated the bicep to allow for an AZURE Resource group for the webapp in configuration
 * removed workflows
 
+**Important** to target resources in a specific group make sure to update the `.env` file in the .azure folder with the following value
+AZURE_ENV_NAME="" <-- AZD environment name
+AZURE_FORMRECOGNIZER_RESOURCE_GROUP="" <-- form recognizer resource group name
+AZURE_FORMRECOGNIZER_SERVICE="" <-- form recognizer service name
+AZURE_LOCATION="eastus" <-- location
+AZURE_OPENAI_CHATGPT_DEPLOYMENT="" <-- Chat deployment name must use 0301 or later
+AZURE_OPENAI_EMB_DEPLOYMENT="" <-- Ada deployment name must use model 2 or later
+AZURE_OPENAI_GPT_DEPLOYMENT="" <-- Davinci deployment name must use model 0301 or later
+AZURE_OPENAI_RESOURCE_GROUP="" <-- Azure Open AI Resource Group
+AZURE_OPENAI_SERVICE="" <-- Azure Open AI service Name
+AZURE_RESOURCE_GROUP="" <--  Resource group for Web App
+AZURE_SEARCH_INDEX="" <-- Search service index
+AZURE_SEARCH_SERVICE="" <-- Search service name
+AZURE_SEARCH_SERVICE_RESOURCE_GROUP="" <-- Search service resource group
+AZURE_STORAGE_ACCOUNT="" <-- Storage account name
+AZURE_STORAGE_CONTAINER="" <-- Storage account container
+AZURE_STORAGE_RESOURCE_GROUP="" <-- Resource group for the storage account
+AZURE_SUBSCRIPTION_ID= "" <-- Azure Subscription ID
+AZURE_TENANT_ID= "" <-- for authenication
+
 # ChatGPT + Enterprise data with Azure OpenAI and Cognitive Search
 
 [![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=brightgreen&logo=github)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=599293758&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=WestUs2)
