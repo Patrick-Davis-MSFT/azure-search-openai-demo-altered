@@ -39,6 +39,11 @@ openai.api_type = "azure"
 openai.api_base = f"https://{AZURE_OPENAI_SERVICE}.openai.azure.com"
 openai.api_version = "2023-05-15"
 
+##Added APIM Endpoint if set 
+AZURE_APIM_OPENAI_URL = os.environ.get("AZURE_APIM_OPENAI_URL", "")
+if AZURE_APIM_OPENAI_URL != "":
+    openai.api_base = AZURE_APIM_OPENAI_URL
+
 # Comment these two lines out if using keys, set your API key in the OPENAI_API_KEY environment variable instead
 openai.api_type = "azure_ad"
 openai_token = azure_credential.get_token("https://cognitiveservices.azure.com/.default")
@@ -124,6 +129,36 @@ def chat():
         return jsonify(r)
     except Exception as e:
         logging.exception("Exception in /chat")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/indexes", methods=["GET"])
+def indexes():
+    ensure_openai_token()
+    return jsonify([
+        {"id": "1",
+        "name": "Eye of the Tiger"},
+        {"id": "2",
+        "name": "The Final Countdown"},
+        {"id": "3",
+        "name": "The Safety Dance"},
+        {"id": "4",
+        "name": "Ice Ice Baby"}
+    ])    
+
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    ensure_openai_token()
+    try:
+        fName = request.json["name"]
+        file = request.json["file"]
+        
+        if not file:
+            return jsonify({"error": "no file"}), 400
+        #some Azure Upload
+        return fName
+    except Exception as e:
+        logging.exception("Exception in /upload")
         return jsonify({"error": str(e)}), 500
 
 def ensure_openai_token():
