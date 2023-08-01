@@ -3,8 +3,26 @@ import { Outlet, NavLink, Link } from "react-router-dom";
 import github from "../../assets/github.svg";
 
 import styles from "./Layout.module.css";
+import { HistoryButton } from "../../components/HistoryButton";
+import { FileButton } from "../../components/FilePanel/FileButton";
+import { useState } from "react";
+import { Index } from "../../api";
+import { HistoryPanel } from "../../components/HistoryPanel";
+import { FilePanel } from "../../components/FilePanel/FilePanel";
+import { mergeStyleSets, mergeStyles } from "@fluentui/react";
 
 const Layout = () => {
+
+    const [isHistPanelOpen, setIsHistPanelOpen] = useState(false);
+    const [isFilePanelOpen, setIsFilePanelOpen] = useState(false);
+    const [fileIndexList, setFileIndexList] = useState<Index[]>([]);
+
+    const addFileIndexList = (file: Index) => {
+        var newFileIndexList = [...fileIndexList];
+        newFileIndexList.push(file);
+        setFileIndexList(newFileIndexList);
+    };
+
     return (
         <div className={styles.layout}>
             <header className={styles.header} role={"banner"}>
@@ -38,8 +56,24 @@ const Layout = () => {
                             </li>
                         </ul>
                     </nav>
-                    <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4>
+                    <span>
+                        <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4>
+                        <div className={styles.headerRightText2}>
+                            {false ? <></> : <HistoryButton className={styles.settingsButton} onClick={() => setIsHistPanelOpen(!isHistPanelOpen)} />}
+                            {false ? <></> : <FileButton className={styles.settingsButton} onClick={() => setIsFilePanelOpen(!isFilePanelOpen)} />}
+                            <FilePanel
+                                show={isFilePanelOpen}
+                                close={(cls: boolean) => setIsFilePanelOpen(false)}
+                                setIndex={(idx: Index) => addFileIndexList(idx)}
+                            />
+                            <HistoryPanel
+                                show={isHistPanelOpen}
+                                close={(cls: boolean) => setIsHistPanelOpen(false)}
+                            />
+                        </div>
+                    </span>
                 </div>
+
             </header>
 
             <Outlet />

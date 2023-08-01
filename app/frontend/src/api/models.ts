@@ -46,3 +46,10 @@ export type ChatRequest = {
     approach: Approaches;
     overrides?: AskRequestOverrides;
 };
+
+
+export type Index = {
+    id: string;
+    name: string;
+}
+export type Indexes = Index[];
