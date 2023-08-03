@@ -1,6 +1,7 @@
 # Azure az webapp deployment details
 .azure
 *_env
+docker-compose.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

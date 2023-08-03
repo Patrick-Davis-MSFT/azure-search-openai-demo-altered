@@ -59,8 +59,8 @@ const Layout = () => {
                     <span>
                         <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4>
                         <div className={styles.headerRightText2}>
-                            {false ? <></> : <HistoryButton className={styles.settingsButton} onClick={() => setIsHistPanelOpen(!isHistPanelOpen)} />}
-                            {false ? <></> : <FileButton className={styles.settingsButton} onClick={() => setIsFilePanelOpen(!isFilePanelOpen)} />}
+                            {true ? <></> : <HistoryButton className={styles.settingsButton} onClick={() => setIsHistPanelOpen(!isHistPanelOpen)} />}
+                            {true ? <></> : <FileButton className={styles.settingsButton} onClick={() => setIsFilePanelOpen(!isFilePanelOpen)} />}
                             <FilePanel
                                 show={isFilePanelOpen}
                                 close={(cls: boolean) => setIsFilePanelOpen(false)}
