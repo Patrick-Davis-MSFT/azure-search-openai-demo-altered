@@ -23,6 +23,21 @@ AZURE_STORAGE_RESOURCE_GROUP="" <-- Resource group for the storage account
 AZURE_SUBSCRIPTION_ID= "" <-- Azure Subscription ID
 AZURE_TENANT_ID= "" <-- for authenication
 
+If deploying through the docker file you will need the following environmental variable from the service principal 
+AZURE_CLIENT_ID=VALUE
+AZURE_CLIENT_SECRET=VALUE
+The service principal will need the following
+* Search Service - Search Index Data Contributor (Reader is not sufficient)
+* Storage account - Storage Blob Data Contributor (Reader is not sufficient)
+* Azure OpenAI Service - Cognitive Services User
+
+Add all Azure Developer CLI variables and the additional 2 above to the Docker compose file or the webapp configuration or any combination of the two.
+
+To run through the APIM using the following variable
+AZURE_APIM_OPENAI_URL=APIM_API_ENDPOINT_URL
+
+
+
 # ChatGPT + Enterprise data with Azure OpenAI and Cognitive Search
 
 [![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=brightgreen&logo=github)](https://github.com/codespaces/new?hide_repo_select=false&ref=main&repo=599293758&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=WestUs2)
