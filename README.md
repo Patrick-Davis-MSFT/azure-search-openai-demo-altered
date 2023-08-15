@@ -11,24 +11,24 @@
 1. Deploy the files with `azd up`
 
 **Important** to target resources in a specific group make sure to update the `.env` file in the .azure folder with the following value
-AZURE_ENV_NAME="" <-- AZD environment name (do not change this after initialization)
-AZURE_FORMRECOGNIZER_RESOURCE_GROUP="" <-- form recognizer resource group name
-AZURE_FORMRECOGNIZER_SERVICE="" <-- form recognizer service name
-AZURE_LOCATION="eastus" <-- location
-AZURE_OPENAI_CHATGPT_DEPLOYMENT="" <-- Chat deployment name must use 0301 or later
-AZURE_OPENAI_EMB_DEPLOYMENT="" <-- Ada deployment name must use model 2 or later
-AZURE_OPENAI_GPT_DEPLOYMENT="" <-- Davinci deployment name must use model 0301 or later
-AZURE_OPENAI_RESOURCE_GROUP="" <-- *REQUIRED* Azure Open AI Resource Group
-AZURE_OPENAI_SERVICE="" <-- *REQUIRED* Azure Open AI service Name
-AZURE_RESOURCE_GROUP="" <--  Resource group for Web App
-AZURE_SEARCH_INDEX="" <-- Search service index
-AZURE_SEARCH_SERVICE="" <-- Search service name
-AZURE_SEARCH_SERVICE_RESOURCE_GROUP="" <-- Search service resource group
-AZURE_STORAGE_ACCOUNT="" <-- Storage account name
-AZURE_STORAGE_CONTAINER="" <-- Storage account container
-AZURE_STORAGE_RESOURCE_GROUP="" <-- Resource group for the storage account
-AZURE_SUBSCRIPTION_ID= "" <-- Azure Subscription ID
-AZURE_TENANT_ID= "" <-- for authenication
+* AZURE_ENV_NAME="" <-- AZD environment name (do not change this after initialization)
+* AZURE_FORMRECOGNIZER_RESOURCE_GROUP="" <-- form recognizer resource group name
+* AZURE_FORMRECOGNIZER_SERVICE="" <-- form recognizer service name
+* AZURE_LOCATION="eastus" <-- location
+* AZURE_OPENAI_CHATGPT_DEPLOYMENT="" <-- Chat deployment name must use 0301 or later
+* AZURE_OPENAI_EMB_DEPLOYMENT="" <-- Ada deployment name must use model 2 or later
+* AZURE_OPENAI_GPT_DEPLOYMENT="" <-- Davinci deployment name must use model 0301 or later
+* AZURE_OPENAI_RESOURCE_GROUP="" <-- <b>REQUIRED</b> Azure Open AI Resource Group
+* AZURE_OPENAI_SERVICE="" <-- <b>REQUIRED</b> Azure Open AI service Name
+* AZURE_RESOURCE_GROUP="" <--  Resource group for Web App
+* AZURE_SEARCH_INDEX="" <-- Search service index
+* AZURE_SEARCH_SERVICE="" <-- Search service name
+* AZURE_SEARCH_SERVICE_RESOURCE_GROUP="" <-- Search service resource group
+* AZURE_STORAGE_ACCOUNT="" <-- Storage account name
+* AZURE_STORAGE_CONTAINER="" <-- Storage account container
+* AZURE_STORAGE_RESOURCE_GROUP="" <-- Resource group for the storage account
+* AZURE_SUBSCRIPTION_ID= "" <-- Azure Subscription ID
+* AZURE_TENANT_ID= "" <-- for authenication
 
 If deploying through the docker file you will need the following environmental variable from the service principal 
 AZURE_CLIENT_ID=VALUE
