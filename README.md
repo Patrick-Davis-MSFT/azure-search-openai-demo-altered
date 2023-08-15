@@ -3,8 +3,15 @@
 * Updated the bicep to allow for an AZURE Resource group for the webapp in configuration
 * removed workflows
 
+## to setup with azd in cloud shell (cloud shell automatically authenicates to the user)
+1. Create a new directory for the deployment
+1. azd init -t Patrick-Davis-MSFT/azure-search-openai-demo-altered
+1. Choose to overwrite the files if no if you cloned and/or made changes locally 
+1. Update the parameters in the `.azure` folder
+1. Deploy the files with `azd up`
+
 **Important** to target resources in a specific group make sure to update the `.env` file in the .azure folder with the following value
-AZURE_ENV_NAME="" <-- AZD environment name
+AZURE_ENV_NAME="" <-- AZD environment name (do not change this after initialization)
 AZURE_FORMRECOGNIZER_RESOURCE_GROUP="" <-- form recognizer resource group name
 AZURE_FORMRECOGNIZER_SERVICE="" <-- form recognizer service name
 AZURE_LOCATION="eastus" <-- location
