@@ -10,8 +10,16 @@ param sku object = {
   name: 'S0'
 }
 
-resource account 'Microsoft.CognitiveServices/accounts@2023-05-01' existing =  {
+resource account 'Microsoft.CognitiveServices/accounts@2023-05-01' =  {
   name: name
+  location: location
+  tags: tags
+  kind: kind
+  properties: {
+    customSubDomainName: customSubDomainName
+    publicNetworkAccess: publicNetworkAccess
+  }
+  sku: sku
 }
 
 @batchSize(1)
