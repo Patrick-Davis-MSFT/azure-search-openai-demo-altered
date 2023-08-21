@@ -5,7 +5,7 @@ export interface WhiteBoxProps {
 }
 export class WhiteBoxModel {
     //View settings
-    static useWhiteBox: boolean = true;
+    static useWhiteBox: boolean = false;
 
     //Page View Overrides
     static showDevSettings: boolean = false;
