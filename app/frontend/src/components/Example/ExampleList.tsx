@@ -1,4 +1,5 @@
 import { Example } from "./Example";
+import { WhiteBoxModel } from "../WhiteBox/WhiteBox";
 
 import styles from "./Example.module.css";
 
@@ -21,9 +22,13 @@ interface Props {
 }
 
 export const ExampleList = ({ onExampleClicked }: Props) => {
+    var examplePrompts: ExampleModel[] = EXAMPLES;
+    if (WhiteBoxModel.useWhiteBox) {
+        examplePrompts = WhiteBoxModel.example;
+    }
     return (
         <ul className={styles.examplesNavList}>
-            {EXAMPLES.map((x, i) => (
+            {examplePrompts.map((x, i) => (
                 <li key={i}>
                     <Example text={x.text} value={x.value} onClick={onExampleClicked} />
                 </li>

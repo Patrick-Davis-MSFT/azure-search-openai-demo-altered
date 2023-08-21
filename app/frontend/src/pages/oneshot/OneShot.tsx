@@ -9,6 +9,7 @@ import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { SettingsButton } from "../../components/SettingsButton/SettingsButton";
+import { WhiteBoxModel } from "../../components/WhiteBox/WhiteBox";
 
 export function Component(): JSX.Element {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -135,14 +136,21 @@ export function Component(): JSX.Element {
         }
     ];
 
+    var questTitle = "Ask your data";
+    var questPrompt = "Example: Does my plan cover annual eye exams?";
+    if (WhiteBoxModel.useWhiteBox) {
+        questTitle = WhiteBoxModel.questPageTitle;
+        questPrompt = WhiteBoxModel.questPrompt;
+    }
+
     return (
         <div className={styles.oneshotContainer}>
             <div className={styles.oneshotTopSection}>
                 <SettingsButton className={styles.settingsButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
-                <h1 className={styles.oneshotTitle}>Ask your data</h1>
+                <h1 className={styles.oneshotTitle}>{questTitle}</h1>
                 <div className={styles.oneshotQuestionInput}>
                     <QuestionInput
-                        placeholder="Example: Does my plan cover annual eye exams?"
+                        placeholder={questPrompt}
                         disabled={isLoading}
                         onSend={question => makeApiRequest(question)}
                     />

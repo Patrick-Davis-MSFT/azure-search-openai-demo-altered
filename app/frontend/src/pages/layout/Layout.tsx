@@ -10,6 +10,7 @@ import { Index } from "../../api";
 import { HistoryPanel } from "../../components/HistoryPanel";
 import { FilePanel } from "../../components/FilePanel/FilePanel";
 import { mergeStyleSets, mergeStyles } from "@fluentui/react";
+import { WhiteBoxModel } from "../../components/WhiteBox/WhiteBox";
 
 const Layout = () => {
 
@@ -23,41 +24,50 @@ const Layout = () => {
         setFileIndexList(newFileIndexList);
     };
 
+    var leftTitle = "GPT + Enterprise data | Sample";
+    var rightTitle = "Azure OpenAI + Cognitive Search";
+    if (WhiteBoxModel.useWhiteBox) {
+        leftTitle = WhiteBoxModel.menuLeftTitle;
+        rightTitle = WhiteBoxModel.menuRightTitle;
+    }
+
     return (
         <div className={styles.layout}>
             <header className={styles.header} role={"banner"}>
                 <div className={styles.headerContainer}>
                     <Link to="/" className={styles.headerTitleContainer}>
-                        <h3 className={styles.headerTitle}>GPT + Enterprise data | Sample</h3>
+                        <h3 className={styles.headerTitle}>{leftTitle}</h3>
                     </Link>
                     <nav>
                         <ul className={styles.headerNavList}>
-                            <li>
-                                <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                    Chat
-                                </NavLink>
-                            </li>
-                            <li className={styles.headerNavLeftMargin}>
-                                <NavLink to="/qa" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                    Ask a question
-                                </NavLink>
-                            </li>
-                            <li className={styles.headerNavLeftMargin}>
-                                <a href="https://aka.ms/entgptsearch" target={"_blank"} title="Github repository link">
-                                    <img
-                                        src={github}
-                                        alt="Github logo"
-                                        aria-label="Link to github repository"
-                                        width="20px"
-                                        height="20px"
-                                        className={styles.githubLogo}
-                                    />
-                                </a>
-                            </li>
+                            {WhiteBoxModel.showQuestion || !WhiteBoxModel.useWhiteBox ?
+                                (<><li>
+                                    <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
+                                        Chat
+                                    </NavLink>
+                                </li>
+                                    <li className={styles.headerNavLeftMargin}>
+                                        <NavLink to="/qa" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
+                                            Ask a question
+                                        </NavLink>
+                                    </li></>) : <></>}
+                            {WhiteBoxModel.showGitHub || !WhiteBoxModel.useWhiteBox ?
+                                <li className={styles.headerNavLeftMargin}>
+                                    <a href="https://aka.ms/entgptsearch" target={"_blank"} title="Github repository link">
+                                        <img
+                                            src={github}
+                                            alt="Github logo"
+                                            aria-label="Link to github repository"
+                                            width="20px"
+                                            height="20px"
+                                            className={styles.githubLogo}
+                                        />
+                                    </a>
+                                </li> : <></>}
                         </ul>
                     </nav>
                     <span>
-                        <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4>
+                        <h4 className={styles.headerRightText}>{rightTitle}</h4>
                         <div className={styles.headerRightText2}>
                             {true ? <></> : <HistoryButton className={styles.settingsButton} onClick={() => setIsHistPanelOpen(!isHistPanelOpen)} />}
                             {true ? <></> : <FileButton className={styles.settingsButton} onClick={() => setIsFilePanelOpen(!isFilePanelOpen)} />}
