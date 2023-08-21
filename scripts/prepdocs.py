@@ -13,7 +13,20 @@ from azure.core.credentials import AzureKeyCredential
 from azure.identity import AzureDeveloperCliCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
-from azure.search.documents.indexes.models import *
+from azure.search.documents.indexes.models import (
+    HnswParameters,
+    PrioritizedFields,
+    SearchableField,
+    SearchField,
+    SearchFieldDataType,
+    SearchIndex,
+    SemanticConfiguration,
+    SemanticField,
+    SemanticSettings,
+    SimpleField,
+    VectorSearch,
+    VectorSearchAlgorithmConfiguration,
+)
 from azure.storage.blob import BlobServiceClient
 from pypdf import PdfReader, PdfWriter
 from tenacity import retry, stop_after_attempt, wait_random_exponential
@@ -21,6 +34,11 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 MAX_SECTION_LENGTH = 1000
 SENTENCE_SEARCH_LIMIT = 100
 SECTION_OVERLAP = 100
+
+open_ai_token_cache = {}
+CACHE_KEY_TOKEN_CRED = 'openai_token_cred'
+CACHE_KEY_CREATED_TIME = 'created_time'
+CACHE_KEY_TOKEN_TYPE = 'token_type'
 
 def blob_name_from_file_page(filename, page = 0):
     if os.path.splitext(filename)[1].lower() == ".pdf":
@@ -57,7 +75,7 @@ def remove_blobs(filename):
     blob_service = BlobServiceClient(account_url=f"https://{args.storageaccount}.blob.core.windows.net", credential=storage_creds)
     blob_container = blob_service.get_container_client(args.container)
     if blob_container.exists():
-        if filename == None:
+        if filename is None:
             blobs = blob_container.list_blob_names()
         else:
             prefix = os.path.splitext(os.path.basename(filename))[0]
@@ -113,13 +131,13 @@ def get_document_text(filename):
                         if idx >=0 and idx < page_length:
                             table_chars[idx] = table_id
 
-            # build page text by replacing charcters in table spans with table html
+            # build page text by replacing characters in table spans with table html
             page_text = ""
             added_tables = set()
             for idx, table_id in enumerate(table_chars):
                 if table_id == -1:
                     page_text += form_recognizer_results.content[page_offset + idx]
-                elif not table_id in added_tables:
+                elif table_id not in added_tables:
                     page_text += table_to_html(tables_on_page[table_id])
                     added_tables.add(table_id)
 
@@ -135,11 +153,11 @@ def split_text(page_map):
     if args.verbose: print(f"Splitting '{filename}' into sections")
 
     def find_page(offset):
-        l = len(page_map)
-        for i in range(l - 1):
+        num_pages = len(page_map)
+        for i in range(num_pages - 1):
             if offset >= page_map[i][1] and offset < page_map[i + 1][1]:
                 return i
-        return l - 1
+        return num_pages - 1
 
     all_text = "".join(p[2] for p in page_map)
     length = len(all_text)
@@ -185,7 +203,7 @@ def split_text(page_map):
             start = min(end - SECTION_OVERLAP, start + last_table_start)
         else:
             start = end - SECTION_OVERLAP
-        
+
     if start + SECTION_OVERLAP < end:
         yield (all_text[start:end], find_page(start))
 
@@ -209,10 +227,11 @@ def create_sections(filename, page_map, use_vectors):
         yield section
 
 def before_retry_sleep(retry_state):
-    if args.verbose: print(f"Rate limited on the OpenAI embeddings API, sleeping before retrying...")
+    if args.verbose: print("Rate limited on the OpenAI embeddings API, sleeping before retrying...")
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(15), before_sleep=before_retry_sleep)
 def compute_embedding(text):
+    refresh_openai_token()
     return openai.Embedding.create(engine=args.openaideployment, input=text)["data"][0]["embedding"]
 
 def create_search_index():
@@ -225,7 +244,7 @@ def create_search_index():
             fields=[
                 SimpleField(name="id", type="Edm.String", key=True),
                 SearchableField(name="content", type="Edm.String", analyzer_name="en.microsoft"),
-                SearchField(name="embedding", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), 
+                SearchField(name="embedding", type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
                             hidden=False, searchable=True, filterable=False, sortable=False, facetable=False,
                             vector_search_dimensions=1536, vector_search_configuration="default"),
                 SimpleField(name="category", type="Edm.String", filterable=True, facetable=True),
@@ -242,10 +261,10 @@ def create_search_index():
                         VectorSearchAlgorithmConfiguration(
                             name="default",
                             kind="hnsw",
-                            hnsw_parameters=HnswParameters(metric="cosine") 
+                            hnsw_parameters=HnswParameters(metric="cosine")
                         )
                     ]
-                )        
+                )
             )
         if args.verbose: print(f"Creating {args.index} search index")
         index_client.create_index(index)
@@ -279,7 +298,7 @@ def remove_from_index(filename):
                                     index_name=args.index,
                                     credential=search_creds)
     while True:
-        filter = None if filename == None else f"sourcefile eq '{os.path.basename(filename)}'"
+        filter = None if filename is None else f"sourcefile eq '{os.path.basename(filename)}'"
         r = search_client.search("", filter=filter, top=1000, include_total_count=True)
         if r.get_count() == 0:
             break
@@ -288,6 +307,12 @@ def remove_from_index(filename):
         # It can take a few seconds for search results to reflect changes, so wait a bit
         time.sleep(2)
 
+# refresh open ai token every 5 minutes
+def refresh_openai_token():
+    if open_ai_token_cache[CACHE_KEY_TOKEN_TYPE] == 'azure_ad' and open_ai_token_cache[CACHE_KEY_CREATED_TIME] + 300 < time.time():
+        token_cred = open_ai_token_cache[CACHE_KEY_TOKEN_CRED]
+        openai.api_key = token_cred.get_token("https://cognitiveservices.azure.com/.default").token
+        open_ai_token_cache[CACHE_KEY_CREATED_TIME] = time.time()
 
 if __name__ == "__main__":
 
@@ -318,24 +343,27 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Use the current user identity to connect to Azure services unless a key is explicitly set for any of them
-    azd_credential = AzureDeveloperCliCredential() if args.tenantid == None else AzureDeveloperCliCredential(tenant_id=args.tenantid, process_timeout=60)
-    default_creds = azd_credential if args.searchkey == None or args.storagekey == None else None
-    search_creds = default_creds if args.searchkey == None else AzureKeyCredential(args.searchkey)
+    azd_credential = AzureDeveloperCliCredential() if args.tenantid is None else AzureDeveloperCliCredential(tenant_id=args.tenantid, process_timeout=60)
+    default_creds = azd_credential if args.searchkey is None or args.storagekey is None else None
+    search_creds = default_creds if args.searchkey is None else AzureKeyCredential(args.searchkey)
     use_vectors = not args.novectors
 
     if not args.skipblobs:
-        storage_creds = default_creds if args.storagekey == None else args.storagekey
+        storage_creds = default_creds if args.storagekey is None else args.storagekey
     if not args.localpdfparser:
         # check if Azure Form Recognizer credentials are provided
-        if args.formrecognizerservice == None:
+        if args.formrecognizerservice is None:
             print("Error: Azure Form Recognizer service is not provided. Please provide formrecognizerservice or use --localpdfparser for local pypdf parser.")
             exit(1)
-        formrecognizer_creds = default_creds if args.formrecognizerkey == None else AzureKeyCredential(args.formrecognizerkey)
+        formrecognizer_creds = default_creds if args.formrecognizerkey is None else AzureKeyCredential(args.formrecognizerkey)
 
     if use_vectors:
-        if args.openaikey == None:
+        if args.openaikey is None:
             openai.api_key = azd_credential.get_token("https://cognitiveservices.azure.com/.default").token
             openai.api_type = "azure_ad"
+            open_ai_token_cache[CACHE_KEY_CREATED_TIME] = time.time()
+            open_ai_token_cache[CACHE_KEY_TOKEN_CRED] = azd_credential
+            open_ai_token_cache[CACHE_KEY_TOKEN_TYPE] = "azure_ad"
         else:
             openai.api_type = "azure"
             openai.api_key = args.openaikey
@@ -349,8 +377,8 @@ if __name__ == "__main__":
     else:
         if not args.remove:
             create_search_index()
-        
-        print(f"Processing files...")
+
+        print("Processing files...")
         for filename in glob.glob(args.files):
             if args.verbose: print(f"Processing '{filename}'")
             if args.remove:
