@@ -141,8 +141,9 @@ const Chat = () => {
         chatPrompt = WhiteBoxModel.chatPrompt;
         chatTitle = WhiteBoxModel.chatPageTitle;
         chatPageSubTitle = WhiteBoxModel.chatPageSubTitle;
-        chatLogo = WhiteBoxModel.chatLogo;
-
+        if (WhiteBoxModel.chatLogoOverride) {
+            chatLogo = WhiteBoxModel.chatLogo;
+        }
     }
 
     return (

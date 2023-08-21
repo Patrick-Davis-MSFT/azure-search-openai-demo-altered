@@ -5,7 +5,7 @@ export interface WhiteBoxProps {
 }
 export class WhiteBoxModel {
     //View settings
-    static useWhiteBox: boolean = false;
+    static useWhiteBox: boolean = true;
 
     //Page View Overrides
     static showDevSettings: boolean = false;
@@ -23,6 +23,7 @@ export class WhiteBoxModel {
     ];
     static chatPrompt: string = "What is your prompt for the entry box?";
     static questPrompt: string = "What is your prompt for the entry box?";
+    static chatLogoOverride: boolean = true;
     static chatLogo = () => {
         return (
             <img src={logo} height={"50px"} style={{ marginBottom: 20 + 'px' }} alt="Microsoft Logo" />
