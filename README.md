@@ -1,7 +1,8 @@
 # IMPORANT THIS REPO was copied from https://github.com/Azure-Samples/azure-search-openai-demo on 07262023 and altered to include
 * Calling AOAI through an APIM using the app configuration AZURE_APIM_OPENAI_URL
 * Updated the bicep to allow for an AZURE Resource group for the webapp in configuration
-* removed workflows
+* removed workflows for git actions
+* Added Whiteboxing to add features
 
 ## to setup with azd in cloud shell (cloud shell automatically authenicates to the user)
 1. Create a new directory for the deployment
