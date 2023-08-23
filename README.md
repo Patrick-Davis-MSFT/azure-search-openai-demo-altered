@@ -7,8 +7,7 @@
 ## to setup with azd in cloud shell (cloud shell automatically authenicates to the user)
 1. Create a new directory for the deployment
 1. You will need to login using `azd auth login` to run the python scripts 
-1. `azd init -t Patrick-Davis-MSFT/azure-search-openai-demo-altered`
-  1. This will not link the downloaded solution to the git repo
+1. `azd init -t Patrick-Davis-MSFT/azure-search-openai-demo-altered` Note: This will not link the downloaded solution to the git repo
 1. Choose to overwrite the files if no if you cloned and/or made changes locally 
 1. Add the `AZURE_OPENAI_RESOURCE_GROUP` and `AZURE_OPENAI_SERVICE` to the `.azure/{enviroment-name}/.env` file 
 1. Update the parameters in the `.azure` folder as needed
