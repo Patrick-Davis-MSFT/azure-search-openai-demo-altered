@@ -2,9 +2,10 @@
 * Calling AOAI through an APIM using the app configuration AZURE_APIM_OPENAI_URL
 * Updated the bicep to allow for an AZURE Resource group for the webapp in configuration
 * removed workflows for git actions
-* Added Whiteboxing to add features
+* Added White boxing to add features
+* To run the custom doc prep, delete the existing index, place the custom documents in `./data_custom/` directory and run the `./scripts/prepdocs_custom.ps1` or `./scripts/prepdocs_custom.sh`
 
-## to setup with azd in cloud shell (cloud shell automatically authenicates to the user)
+## To setup with azd in cloud shell (cloud shell automatically authenticates to the user but multiple subscriptions do require `azd auth login` command)
 1. Create a new directory for the deployment
 1. You will need to login using `azd auth login` to run the python scripts 
 1. `azd init -t Patrick-Davis-MSFT/azure-search-openai-demo-altered` Note: This will not link the downloaded solution to the git repo

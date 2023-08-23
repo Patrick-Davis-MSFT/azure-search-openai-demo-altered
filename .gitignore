@@ -1,3 +1,6 @@
+# Ignore custom data files
+data_custom/
+
 # Azure az webapp deployment details
 .azure
 *_env
