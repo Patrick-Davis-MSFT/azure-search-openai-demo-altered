@@ -10,7 +10,7 @@
 1. `azd init -t Patrick-Davis-MSFT/azure-search-openai-demo-altered` Note: This will not link the downloaded solution to the git repo
 1. Choose to overwrite the files if no if you cloned and/or made changes locally 
 1. Add the `AZURE_OPENAI_RESOURCE_GROUP` and `AZURE_OPENAI_SERVICE` to the `.azure/{enviroment-name}/.env` file 
-1. Update the parameters in the `.azure` folder as needed
+1. Update the other parameters in the `.azure` folder as needed
 1. If running on the Cloud shell set all scripts in the `scripts` folder to execute using `chmod -R 777 scripts`
 1. Deploy the files with `azd up`
 
