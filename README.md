@@ -34,6 +34,8 @@
 * AZURE_STORAGE_RESOURCE_GROUP="" <-- Resource group for the storage account
 * AZURE_SUBSCRIPTION_ID= "" <-- Azure Subscription ID
 * AZURE_TENANT_ID= "" <-- for authenication
+* AZURE_AOAI_SYSTEM_PROMPT="" <-- optional to change the default system prompt
+* AZURE_AOAI_FOLLOWUP_PROMPT="" <-- Optional to change the default followup prompt 
 
 If deploying through the docker file you will need the following environmental variable from the service principal 
 AZURE_CLIENT_ID=VALUE
@@ -144,7 +146,7 @@ If you've changed the infrastructure files (`infra` folder or `azure.yaml`), the
 
 #### Running locally
 
-1. Run `azd login`
+1. Run `azd auth login`
 2. Change dir to `app`
 3. Run `./start.ps1` or `./start.sh` or run the "VS Code Task: Start App" to start the project locally.
 
