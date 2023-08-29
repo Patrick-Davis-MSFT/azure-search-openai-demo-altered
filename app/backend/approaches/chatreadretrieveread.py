@@ -27,7 +27,7 @@ Each source has a name followed by colon and the actual information, always incl
 {follow_up_questions_prompt}
 {injected_prompt}
 """
-    follow_up_questions_prompt_content =  os.environ.get("AZURE_AOAI_FOLLOWUP_PROMPT") or """Generate three very brief follow-up questions that the user would likely ask next about the sources used in the answers. 
+    follow_up_questions_prompt_content =  os.environ.get("AZURE_AOAI_FOLLOWUP_PROMPT") or """You are the Assistant called Document Chat for Government. Generate three very brief follow-up questions that the user would likely ask next about the sources used in the answers. 
 Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
 Try not to repeat questions that have already been asked.
 Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
