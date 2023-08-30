@@ -2,6 +2,7 @@ from typing import Any, Sequence
 import os
 import openai
 import tiktoken
+import sys
 from azure.search.documents import SearchClient
 from azure.search.documents.models import QueryType
 from approaches.approach import Approach
@@ -20,20 +21,32 @@ class ChatReadRetrieveReadApproach(Approach):
     top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
     (answer) with that prompt.
     """
-    system_message_chat_conversation =  os.environ.get("AZURE_AOAI_SYSTEM_PROMPT") or """You are the Assistant called Document Chat for Government. Assistant helps the company employees with document questions, and questions about the searched documents. Be brief in your answers.
-Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. Always include at least one source in your answer. If asking a clarifying question to the user would help, ask the question.
-For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].
+    system_message_chat_conversation =  os.environ.get("AZURE_AOAI_SYSTEM_PROMPT") or """
+<|im_start|>
+You are the Assistant called Document Chat for Government. \n
+The Assistant helps the company employees with document questions, and questions about the searched documents. Be brief in your answers.\n
+Answer ONLY with the facts listed in the list of sources below. Do NOT answer with general knowledge.\n
+Do NOT answer questions if you refused to answer the question before. Refuse to answer questions about people or places even if they are general knowledge. \n
+Do NOT answer questions about people or places. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below.\n
+Information requested without found supporting information is considered out of scope and the conversation should end.\n
+Always include at least one source in your answer. If asking a clarifying question to the user would help, ask the question.\n
+For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.\n
+Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response.\n
+Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].\n
 {follow_up_questions_prompt}
-{injected_prompt}
+{injected_prompt}    
+<|im_end|>
 """
-    follow_up_questions_prompt_content =  os.environ.get("AZURE_AOAI_FOLLOWUP_PROMPT") or """You are the Assistant called Document Chat for Government. Generate three very brief follow-up questions that the user would likely ask next about the sources used in the answers. 
+    follow_up_questions_prompt_content =  os.environ.get("AZURE_AOAI_FOLLOWUP_PROMPT") or """You are the Assistant called Document Chat for Government. 
+Answer ONLY with the facts listed in the list of sources below. Do NOT answer questions about people or places.
+Generate three very brief follow-up questions that the user would likely ask next about the sources used in the answers. 
 Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
 Try not to repeat questions that have already been asked.
 Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
 
     query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about the provided documents.
 Generate a search query based on the conversation and the new question. 
+Do not search for people names, places or other private information.
 Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
 Do not include any text inside [] or <<>> in the search query terms.
 Do not include any special characters like '+'.
@@ -146,23 +159,28 @@ If you cannot generate a search query, return just the number 0.
             history[-1]["user"],
             max_tokens=self.chatgpt_token_limit)
 
+        #sys.stdout.write("Messages before submit: " + str(overrides.get("temperature")) + '\n')
+        #sys.stdout.flush()
         chat_completion = openai.ChatCompletion.create(
             deployment_id=self.chatgpt_deployment,
             model=self.chatgpt_model,
             messages=messages, 
-            temperature=overrides.get("temperature") or 0.7, 
+            temperature=overrides.get("temperature") or 0.1, # previously 0.7
             max_tokens=1024, 
             n=1)
 
         chat_content = chat_completion.choices[0].message.content
-
+        #sys.stdout.write("Output: " + str(chat_completion) + '\n')
+        #sys.stdout.flush()
         msg_to_display = '\n\n'.join([str(message) for message in messages])
 
         return {"data_points": results, "answer": chat_content, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
     
     def get_messages_from_history(self, system_prompt: str, model_id: str, history: Sequence[dict[str, str]], user_conv: str, few_shots = [], max_tokens: int = 4096) -> []:
         message_builder = MessageBuilder(system_prompt, model_id)
-
+        #sys.stdout.write("Sys prompt builder: \n" + str(system_prompt) + '\n')
+        #sys.stdout.write("End \n")
+        #sys.stdout.flush()
         # Add examples to show the chat what responses we want. It will try to mimic any responses and make sure they match the rules laid out in the system message.
         for shot in few_shots:
             message_builder.append_message(shot.get('role'), shot.get('content'))
@@ -171,7 +189,9 @@ If you cannot generate a search query, return just the number 0.
         append_index = len(few_shots) + 1
 
         message_builder.append_message(self.USER, user_content, index=append_index)
-
+        #sys.stdout.write("user content: \n" + str(user_content) + '\n')
+        #sys.stdout.write("End \n")
+        #sys.stdout.flush()
         for h in reversed(history[:-1]):
             if h.get("bot"):
                 message_builder.append_message(self.ASSISTANT, h.get('bot'), index=append_index)
