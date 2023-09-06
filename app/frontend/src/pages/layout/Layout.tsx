@@ -6,7 +6,7 @@ import styles from "./Layout.module.css";
 import { HistoryButton } from "../../components/HistoryButton";
 import { FileButton } from "../../components/FilePanel/FileButton";
 import { useState } from "react";
-import { Index } from "../../api";
+import { Index, ReadyFile } from "../../api";
 import { HistoryPanel } from "../../components/HistoryPanel";
 import { FilePanel } from "../../components/FilePanel/FilePanel";
 import { mergeStyleSets, mergeStyles } from "@fluentui/react";
@@ -16,9 +16,9 @@ const Layout = () => {
 
     const [isHistPanelOpen, setIsHistPanelOpen] = useState(false);
     const [isFilePanelOpen, setIsFilePanelOpen] = useState(false);
-    const [fileIndexList, setFileIndexList] = useState<Index[]>([]);
+    const [fileIndexList, setFileIndexList] = useState<ReadyFile[]>([]);
 
-    const addFileIndexList = (file: Index) => {
+    const addFileIndexList = (file: ReadyFile) => {
         var newFileIndexList = [...fileIndexList];
         newFileIndexList.push(file);
         setFileIndexList(newFileIndexList);
@@ -74,7 +74,7 @@ const Layout = () => {
                             <FilePanel
                                 show={isFilePanelOpen}
                                 close={(cls: boolean) => setIsFilePanelOpen(false)}
-                                setIndex={(idx: Index) => addFileIndexList(idx)}
+                                setIndex={(idx: ReadyFile) => addFileIndexList(idx)}
                             />
                             <HistoryPanel
                                 show={isHistPanelOpen}

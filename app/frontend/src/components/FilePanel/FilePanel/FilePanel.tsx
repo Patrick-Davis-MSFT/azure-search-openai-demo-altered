@@ -1,31 +1,35 @@
-import { DefaultButton, Dropdown, List, Panel, Text, TextField } from "@fluentui/react";
+import { DefaultButton, Dropdown, FocusZone, FocusZoneDirection, List, Panel, Text, TextField } from "@fluentui/react";
 //using https://github.com/Jaaneek/useFilePicker
 import { useFilePicker, FileContent, FileError } from 'use-file-picker';
 
 
 import styles from "./FilePanel.module.css";
 import { useEffect, useState } from "react";
-import { Index, Indexes, getIndexes, postFile } from "../../../api";
+import { ReadyFile, getReadyFiles, postFile } from "../../../api";
 import { Document24Regular } from "@fluentui/react-icons";
 
 interface Props {
     className?: string;
     show: boolean;
     close: (cls: boolean) => void;
-    setIndex: (idx: Index) => void;
+    setIndex: (idx: ReadyFile) => void;
 }
 
 
 
 export const FilePanel = ({ className, show, close, setIndex }: Props) => {
 
-    const [fileIndexList, setFileIndexList] = useState<Index[]>([]);
+    const [uploadedFileList, setUploadedFileList] = useState<ReadyFile[]>([]);
     const [uploadList, setUploadList] = useState<FileContent[]>([]); //list of files to upload
+    const setReadyFileList = async () => {
+        const fileIdx = await getReadyFiles();
+        setUploadedFileList(fileIdx);
+        return true;
+    };
+
     useEffect(() => {
         const run = async () => {
-            const fileIdx = await getIndexes();
-            setFileIndexList(fileIdx);
-            return true;
+            await setReadyFileList();
         }
         run();
     }, []);
@@ -33,16 +37,13 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     const UploadFile = () => {
         const run = async (f: FileContent) => {
             const sentFile = await postFile(f);
+            await setReadyFileList();
             return true;
         };
         uploadList.forEach((f) => {
             const sentFile = run(f);
             console.log("Finished" + sentFile);
         });
-    };
-
-    const onIndexChange = (key?: string | number, text?: string) => {
-        setIndex({ id: key as string, name: text || "" });
     };
 
     const addUploadList = (file: FileContent) => {
@@ -75,6 +76,16 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         </>);
     };
 
+    const onRenderCellFiles = (item?: ReadyFile, index?: number | undefined): JSX.Element | null => {
+        if (!item) return null;
+        console.log(item);
+        return (<>
+            <div className={styles.fileOptContainer}>
+                <span className={styles.fileOption}><Document24Regular /> {item.name}</span>
+            </div>
+        </>);
+    };
+
     return (
         <Panel
             headerText="File Indexing"
@@ -93,13 +104,10 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
                 <DefaultButton className={styles.buttonSpace} onClick={() => UploadFile()}>Upload</DefaultButton>
             </>) : null}
             <hr />
-            <h3>Files Index configuration</h3>
+            <h3>Ready for Indexing</h3>
             <div>
-                <Dropdown
-                    label="File Index List"
-                    options={fileIndexList.map((i) => ({ key: i.id, text: i.name }))}
-                    onChange={(ev, item) => onIndexChange(item?.key, item?.text)}
-                /></div>
+                <List items={uploadedFileList} onRenderCell={onRenderCellFiles} /></div>
+
         </Panel>
     );
 };

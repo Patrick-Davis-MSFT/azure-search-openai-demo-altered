@@ -134,19 +134,23 @@ def chat():
         logging.exception("Exception in /chat")
         return jsonify({"error": str(e)}), 500
 
-@app.route("/indexes", methods=["GET"])
+@app.route("/readyFiles", methods=["GET"])
 def indexes():
     ensure_openai_token()
-    return jsonify([
-        {"id": "1",
-        "name": "Eye of the Tiger"},
-        {"id": "2",
-        "name": "The Final Countdown"},
-        {"id": "3",
-        "name": "The Safety Dance"},
-        {"id": "4",
-        "name": "Ice Ice Baby"}
-    ])    
+    try: 
+        blob_service_client = BlobServiceClient(account_url=f"https://" + AZURE_STORAGE_ACCOUNT + ".blob.core.windows.net", credential=azure_credential)
+        container_client = blob_service_client.get_container_client(AZURE_STAGING_CONTAINER) 
+        blobs = container_client.list_blobs()
+        files = [] 
+        for blob in blobs:
+            files.append({
+                "size": blob.size, 
+                "name": blob.name
+                })
+        return jsonify(files)
+    except Exception as e:
+        logging.exception("Exception in /readyFiles")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/upload", methods=["POST"])

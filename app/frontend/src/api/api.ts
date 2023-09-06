@@ -1,4 +1,4 @@
-import { AskRequest, AskResponse, ChatRequest, Indexes } from "./models";
+import { AskRequest, AskResponse, ChatRequest, Indexes, ReadyFiles } from "./models";
 import { FileContent } from "use-file-picker";
 
 export async function askApi(options: AskRequest): Promise<AskResponse> {
@@ -68,15 +68,15 @@ export function getCitationFilePath(citation: string): string {
     return `/content/${citation}`;
 }
 
-export async function getIndexes(): Promise<Indexes> {
-    const response = await fetch("/indexes", {
+export async function getReadyFiles(): Promise<ReadyFiles> {
+    const response = await fetch("/readyFiles", {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
         }
     });
 
-    const parsedResponse: Indexes = await response.json();
+    const parsedResponse: ReadyFiles = await response.json();
     if (response.status > 299 || !response.ok) {
         throw Error("Getting Indexes: Unknown error");
     }
@@ -97,17 +97,7 @@ export async function postFile(inFile: FileContent): Promise<string> {
         method: "POST",
         body: formData
     });
-    /*const response = await fetch("/upload", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            file: inFile.content,
-            name: inFile.name,
-        })
-    });
-*/
+
     const parsedResponse: string = await response.json();
     if (response.status > 299 || !response.ok) {
         throw Error("Uploading File: Unknown error");
@@ -115,5 +105,4 @@ export async function postFile(inFile: FileContent): Promise<string> {
 
     return parsedResponse;
     
-   return "done"
 }
