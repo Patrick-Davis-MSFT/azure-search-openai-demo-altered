@@ -85,21 +85,35 @@ export async function getIndexes(): Promise<Indexes> {
 }
 
 export async function postFile(inFile: FileContent): Promise<string> {
+
+    const formData = new FormData();
+    formData.append(
+        "file",
+        new Blob([inFile.content]),
+        inFile.name
+    );
+
     const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+    });
+    /*const response = await fetch("/upload", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
             file: inFile.content,
-            name: inFile.name
+            name: inFile.name,
         })
     });
-
+*/
     const parsedResponse: string = await response.json();
     if (response.status > 299 || !response.ok) {
         throw Error("Uploading File: Unknown error");
     }
 
     return parsedResponse;
+    
+   return "done"
 }

@@ -4,6 +4,7 @@ import mimetypes
 import time
 import logging
 import openai
+import sys
 from flask import Flask, request, jsonify, send_file, abort
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
@@ -16,6 +17,7 @@ from azure.storage.blob import BlobServiceClient
 # Replace these with your own values, either in environment variables or directly here
 AZURE_STORAGE_ACCOUNT = os.environ.get("AZURE_STORAGE_ACCOUNT") or "mystorageaccount"
 AZURE_STORAGE_CONTAINER = os.environ.get("AZURE_STORAGE_CONTAINER") or "content"
+AZURE_STAGING_CONTAINER = os.environ.get("AZURE_STAGING_CONTAINER") or "staging"
 AZURE_SEARCH_SERVICE = os.environ.get("AZURE_SEARCH_SERVICE") or "gptkb"
 AZURE_SEARCH_INDEX = os.environ.get("AZURE_SEARCH_INDEX") or "gptkbindex"
 AZURE_OPENAI_SERVICE = os.environ.get("AZURE_OPENAI_SERVICE") or "myopenai"
@@ -23,6 +25,7 @@ AZURE_OPENAI_GPT_DEPLOYMENT = os.environ.get("AZURE_OPENAI_GPT_DEPLOYMENT") or "
 AZURE_OPENAI_CHATGPT_DEPLOYMENT = os.environ.get("AZURE_OPENAI_CHATGPT_DEPLOYMENT") or "chat"
 AZURE_OPENAI_CHATGPT_MODEL = os.environ.get("AZURE_OPENAI_CHATGPT_MODEL") or "gpt-35-turbo"
 AZURE_OPENAI_EMB_DEPLOYMENT = os.environ.get("AZURE_OPENAI_EMB_DEPLOYMENT") or "embedding"
+
 
 KB_FIELDS_CONTENT = os.environ.get("KB_FIELDS_CONTENT") or "content"
 KB_FIELDS_CATEGORY = os.environ.get("KB_FIELDS_CATEGORY") or "category"
@@ -150,13 +153,24 @@ def indexes():
 def upload():
     ensure_openai_token()
     try:
-        fName = request.json["name"]
-        file = request.json["file"]
-        
-        if not file:
-            return jsonify({"error": "no file"}), 400
-        #some Azure Upload
-        return fName
+
+        sys.stdout.write("Upload Started")
+        sys.stdout.write("starting file \n")
+        sys.stdout.flush()
+        file = request.files['file']
+        sys.stdout.write("file \n" + str(file))
+        sys.stdout.flush()
+        # Connect to Azure Storage
+        blob_service_client = BlobServiceClient(account_url=f"https://" + AZURE_STORAGE_ACCOUNT + ".blob.core.windows.net", credential=azure_credential)
+        container_client = blob_service_client.get_container_client(AZURE_STAGING_CONTAINER)
+
+        # Upload the file to Azure Storage
+        blob_client = container_client.get_blob_client(file.filename)
+        blob_client.upload_blob(file)
+
+        sys.stdout.write("End \n")
+        sys.stdout.flush()
+        return "File uploaded to Azure Storage!"
     except Exception as e:
         logging.exception("Exception in /upload")
         return jsonify({"error": str(e)}), 500

@@ -1,3 +1,15 @@
 .buttonSpace {
     margin-top: 2px;
 }
+
+.fileOptContainer{
+    float: left;
+    display: block;
+    margin: 1000em;
+}
+
+.fileOption{
+    float: left;
+    display: block;
+    margin: 1000em;
+}

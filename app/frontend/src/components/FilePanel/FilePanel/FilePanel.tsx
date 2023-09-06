@@ -69,7 +69,9 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     const onRenderCell = (item?: FileContent, index?: number | undefined): JSX.Element | null => {
         if (!item) return null;
         return (<>
-            <span><Document24Regular /> {item.name}</span>
+            <div className={styles.fileOptContainer}>
+                <span className={styles.fileOption}><Document24Regular /> {item.name}</span>
+            </div>
         </>);
     };
 

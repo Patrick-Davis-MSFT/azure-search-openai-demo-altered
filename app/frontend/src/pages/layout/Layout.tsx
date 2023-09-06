@@ -70,7 +70,7 @@ const Layout = () => {
                         <h4 className={styles.headerRightText}>{rightTitle}</h4>
                         <div className={styles.headerRightText2}>
                             {true ? <></> : <HistoryButton className={styles.settingsButton} onClick={() => setIsHistPanelOpen(!isHistPanelOpen)} />}
-                            {true ? <></> : <FileButton className={styles.settingsButton} onClick={() => setIsFilePanelOpen(!isFilePanelOpen)} />}
+                            {WhiteBoxModel.showFileUpload ? <FileButton onClick={() => setIsFilePanelOpen(!isFilePanelOpen)} /> : <></>}
                             <FilePanel
                                 show={isFilePanelOpen}
                                 close={(cls: boolean) => setIsFilePanelOpen(false)}

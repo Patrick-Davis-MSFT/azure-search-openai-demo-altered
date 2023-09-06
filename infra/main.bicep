@@ -24,6 +24,7 @@ param storageAccountName string = ''
 param storageResourceGroupName string = ''
 param storageResourceGroupLocation string = location
 param storageContainerName string = 'content'
+param stagingContainerName string = 'prepcontent'
 
 param openAiServiceName string = ''
 param openAiResourceGroupName string = ''
@@ -122,6 +123,7 @@ module backend 'core/host/appservice.bicep' = {
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
       AZURE_OPENAI_EMB_DEPLOYMENT: embeddingDeploymentName
+      AZURE_STAGING_CONTAINER: stagingContainerName
     }
   }
 }
@@ -225,6 +227,10 @@ module storage 'core/storage/storage-account.bicep' = {
     containers: [
       {
         name: storageContainerName
+        publicAccess: 'None'
+      }
+      {
+        name: stagingContainerName
         publicAccess: 'None'
       }
     ]
@@ -352,6 +358,7 @@ output AZURE_SEARCH_SERVICE_RESOURCE_GROUP string = searchServiceResourceGroup.n
 
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = storageContainerName
+output AZURE_STAGING_CONTAINER string = stagingContainerName
 output AZURE_STORAGE_RESOURCE_GROUP string = storageResourceGroup.name
 
 output BACKEND_URI string = backend.outputs.uri
