@@ -6,7 +6,7 @@ export interface WhiteBoxProps {
 export class WhiteBoxModel {
     //View settings
     static useWhiteBox: boolean = false;
-    static showFileUpload: boolean = true;
+    static showFileUpload: boolean = false;
 
     //Page View Overrides
     static showDevSettings: boolean = false;
