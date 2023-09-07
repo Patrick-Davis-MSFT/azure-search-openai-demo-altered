@@ -117,13 +117,19 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_STORAGE_CONTAINER: storageContainerName
+      AZURE_STAGING_CONTAINER: stagingContainerName
       AZURE_OPENAI_SERVICE: openAi.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchService.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
+      AZURE_OPENAI_CHATGPT_MODEL: chatGptModelName
       AZURE_OPENAI_EMB_DEPLOYMENT: embeddingDeploymentName
-      AZURE_STAGING_CONTAINER: stagingContainerName
+      AZURE_FORMRECOGNIZER_SERVICE: formRecognizer.outputs.name
+      AZURE_FORMRECOGNIZER_KEY: formRecognizer.outputs.accountKey
+      KB_FIELDS_CONTENT: 'content'
+      KB_FIELDS_CATEGORY: 'category'
+      KB_FIELDS_SOURCEPAGE: 'sourcepage'
     }
   }
 }
@@ -339,6 +345,37 @@ module searchRoleBackend 'core/security/role.bicep' = {
   }
 }
 
+module formRecRoleBackend 'core/security/role.bicep' = {
+  scope: searchServiceResourceGroup
+  name: 'formReconizer-role-backend'
+  params: {
+    principalId: backend.outputs.identityPrincipalId
+    roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
+    principalType: 'ServicePrincipal'
+  }
+}
+
+module formRec2RoleBackend 'core/security/role.bicep' = {
+  scope: searchServiceResourceGroup
+  name: 'form2Reconizer-role-backend'
+  params: {
+    principalId: backend.outputs.identityPrincipalId
+    roleDefinitionId: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
+    principalType: 'ServicePrincipal'
+  }
+}
+
+module blobDataContributor 'core/security/role.bicep' = {
+  scope: searchServiceResourceGroup
+  name: 'blobDataContributor-role-backend'
+  params: {
+    principalId: backend.outputs.identityPrincipalId
+    roleDefinitionId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    principalType: 'ServicePrincipal'
+  }
+}
+
+
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
@@ -351,6 +388,7 @@ output AZURE_OPENAI_EMB_DEPLOYMENT string = embeddingDeploymentName
 
 output AZURE_FORMRECOGNIZER_SERVICE string = formRecognizer.outputs.name
 output AZURE_FORMRECOGNIZER_RESOURCE_GROUP string = formRecognizerResourceGroup.name
+output AZURE_FORMRECOGNIZER_KEY string = formRecognizer.outputs.accountKey
 
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchService.outputs.name

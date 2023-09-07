@@ -84,19 +84,53 @@ export async function getReadyFiles(): Promise<ReadyFiles> {
     return parsedResponse;
 }
 
+export async function streamToBlob(readableStream: ReadableStream): Promise<Blob> {
+    const reader = readableStream.getReader();
+    const chunks = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    return new Blob(chunks, { type: "application/octet-stream" });
+  }
+  
+export  async function uploadBlob(blob: Blob, fName: string): Promise<void> {
+    const formData = new FormData();
+    formData.append("file", blob, fName);
+    await fetch("/upload", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
 export async function postFile(inFile: FileContent): Promise<string> {
 
     const formData = new FormData();
+
+    const fStream : ReadableStream = inFile.stream();
+const reader = fStream.getReader();
+const chunks: any = [];
+while(true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    chunks.push(value);
+}
+const fBlob = new Blob(chunks, {type: inFile.type});
+
     formData.append(
         "file",
-        new Blob([inFile.content]),
-        inFile.name
+        fBlob,
+        inFile.name,
+        
     );
-
+    console.log (inFile.content);
     const response = await fetch("/upload", {
         method: "POST",
-        body: formData
-    });
+        body: formData,
+    headers: {
+        "Content-Type": "multipart/form-data",
+      }});
 
     const parsedResponse: string = await response.json();
     if (response.status > 299 || !response.ok) {
@@ -105,4 +139,48 @@ export async function postFile(inFile: FileContent): Promise<string> {
 
     return parsedResponse;
     
+}
+
+export async function postFile2(fileName:any, fileContent: any): Promise<string> {
+
+    const formData = new FormData();
+
+    /*formData.append(
+        "file",
+        inFile
+    );*/
+    console.log (fileName);
+    formData.append("filecontent", fileName)
+    formData.append("filename", fileContent)
+    const response = await fetch("/upload", {
+        method: "POST",
+        body: formData,
+    headers: {
+        "Content-Type": "multipart/form-data"
+    }
+    });
+
+    const parsedResponse: string = await response.text();
+    if (response.status > 299 || !response.ok) {
+        throw Error("Uploading File: Unknown error");
+    }
+
+    return parsedResponse;
+    
+}
+
+export async function indexReadyFiles(): Promise<String> {
+    const response = await fetch("/indexUploadedFiles", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    const parsedResponse = await response;
+    if (response.status > 299 || !response.ok) {
+        throw Error("Indexing files: Unknown error");
+    }
+
+    return parsedResponse.text();
 }
