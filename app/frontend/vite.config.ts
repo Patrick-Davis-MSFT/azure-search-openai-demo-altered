@@ -29,7 +29,8 @@ export default defineConfig({
             "/chat": "http://127.0.0.1:5000",
             "/upload": "http://127.0.0.1:5000",
             "/readyFiles": "http://127.0.0.1:5000",
-            "/indexUploadedFiles": "http://127.0.0.1:5000"
+            "/indexUploadedFiles": "http://127.0.0.1:5000",
+            "/removeStagedFile":  "http://127.0.0.1:5000"
         }
     }
 });

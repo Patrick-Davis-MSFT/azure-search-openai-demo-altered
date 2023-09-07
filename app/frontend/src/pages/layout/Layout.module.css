@@ -73,6 +73,9 @@
     margin-left: 20px;
     float: right;
 }
+.filePanelButton {
+    margin-top: 1.3em;
+}
 
 .microsoftLogo {
     height: 23px;

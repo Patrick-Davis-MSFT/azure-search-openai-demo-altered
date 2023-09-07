@@ -104,6 +104,17 @@ export  async function uploadBlob(blob: Blob, fName: string): Promise<void> {
     });
   }
 
+export async function removeStagedFile(fileName: string): Promise<void> {
+    const response = await fetch("/removeStagedFile", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({"fileName": fileName})
+    });
+    return response.json();
+}
+
 export async function postFile(inFile: FileContent): Promise<string> {
 
     const formData = new FormData();

@@ -1,12 +1,12 @@
-import { DefaultButton, Dropdown, FocusZone, FocusZoneDirection, List, Panel, Text, TextField } from "@fluentui/react";
+import { CommandButton, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, List, Panel, Text, TextField } from "@fluentui/react";
 //using https://github.com/Jaaneek/useFilePicker
 import { useFilePicker, FileContent, FileError } from 'use-file-picker';
 
 
 import styles from "./FilePanel.module.css";
-import { useEffect, useRef, useState } from "react";
-import { ReadyFile, getReadyFiles, indexReadyFiles, postFile, postFile2, streamToBlob, uploadBlob, } from "../../../api";
-import { Document24Regular } from "@fluentui/react-icons";
+import { MouseEventHandler, useEffect, useRef, useState } from "react";
+import { ReadyFile, getReadyFiles, indexReadyFiles, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
+import { Document24Regular, Delete24Regular } from "@fluentui/react-icons";
 
 interface Props {
     className?: string;
@@ -30,14 +30,18 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     };
 
     const callIndexFiles = async () => {
-        const retValue = await indexReadyFiles();
-        console.log(retValue);
-        try { await setReadyFileList(); }
+        try {
+            setError("Indexing... (This can take some time)")
+            const retValue = await indexReadyFiles();
+            console.log(retValue);
+            await setReadyFileList();
+        }
         catch (error: any) {
             console.log(error);
             alert(`An error occurred: ${error.message}`);
             setError(error.message);
         }
+        setError(null);
         setUploadIndexDisabled(false);
     };
     const indexFilesPress = () => {
@@ -103,12 +107,26 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         </>);
     };*/
 
+    const removeItem = (name: string) => {
+        setUploadIndexDisabled(true);
+        const removeStagedItem = async (name: string) => {
+            const result = await removeStagedFile(name);
+            console.log(result);
+            await setReadyFileList();
+            setUploadIndexDisabled(false);
+        }
+        removeStagedItem(name);
+    }
     const onRenderCellFiles = (item?: ReadyFile, index?: number | undefined): JSX.Element | null => {
         if (!item) return null;
         console.log(item);
         return (<>
             <div className={styles.fileOptContainer}>
-                <span className={styles.fileOption}><Document24Regular /> {item.name}</span>
+                <span className={styles.fileOption}><Document24Regular />
+                    <Text variant="large">{item.name}</Text>
+                    <CommandButton onClick={() => removeItem(item.name)}><Delete24Regular />
+                    </CommandButton>
+                </span>
             </div>
         </>);
     };
@@ -172,8 +190,8 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
 
                 <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled}>Upload Index</DefaultButton>
                 <List items={uploadedFileList} onRenderCell={onRenderCellFiles} />
+                {error ? <Text variant="large" style={{ color: "red" }}>{error}</Text> : null}
             </div>
-            {error ? <Text variant="small" style={{ color: "red" }}>{error}</Text> : null}
 
         </Panel>
     );

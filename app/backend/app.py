@@ -185,6 +185,20 @@ def indexes():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/removeStagedFile", methods=["POST"])
+def removeStaged():
+    
+    ensure_openai_token()
+    try:
+        file = request.json["fileName"]
+        blob_service_client = BlobServiceClient(account_url=f"https://" + AZURE_STORAGE_ACCOUNT + ".blob.core.windows.net", credential=azure_credential)
+        container_client = blob_service_client.get_container_client(AZURE_STAGING_CONTAINER) 
+        container_client.delete_blob(file)
+        return jsonify({"result":"File removed from Azure Storage!"})
+    except Exception as e:
+        logging.exception("Exception in /removeStagedFile")
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/upload", methods=["POST"])
 def upload():
     ensure_openai_token()
