@@ -4,6 +4,7 @@
 * removed workflows for git actions
 * Added White boxing to add features
 * To run the custom doc prep, delete the existing index, place the custom documents in `./data_custom/` directory and run the `./scripts/prepdocs_custom.ps1` or `./scripts/prepdocs_custom.sh`
+* Upload of files for the document chat
 
 ## To setup with azd in cloud shell (cloud shell automatically authenticates to the user but multiple subscriptions do require `azd auth login` command)
 1. Create a new directory for the deployment
@@ -107,7 +108,7 @@ You can run this repo virtually by using GitHub Codespaces or VS Code Remote Con
 1. Create a new folder and switch to it in the terminal
 1. Run `azd auth login`
 1. Run `azd init -t Patrick-Davis-MSFT/azure-search-openai-demo-altered`
-    * note that this command will initialize a git repository and you do not need to clone this repository
+    * note that this command will download this repository but will not initialize git.
 
 #### Starting from scratch
 
