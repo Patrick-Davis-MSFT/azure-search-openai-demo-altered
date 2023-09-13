@@ -264,7 +264,7 @@ def indexUploadedFiles():
                     upload_client.upload_blob(blob_name, f, overwrite=True)
                     files.append(blob_name)
             else:
-                upload_client.upload_blob(blob.name, b, overwrite=True)
+                upload_client.upload_blob(blob.name, blob, overwrite=True)
                 files.append(blob.name)
         
         blobs = container_client.list_blobs()
