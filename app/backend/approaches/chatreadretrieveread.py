@@ -60,8 +60,9 @@ If you cannot generate a search query, return just the number 0.
         {'role' : ASSISTANT, 'content' : 'Health plan cardio coverage' }
     ]
 
-    def __init__(self, search_client: SearchClient, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
-        self.search_client = search_client
+    def __init__(self, search_service, azure_credential, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
+        self.azure_credential = azure_credential
+        self.search_service = search_service
         self.chatgpt_deployment = chatgpt_deployment
         self.chatgpt_model = chatgpt_model
         self.embedding_deployment = embedding_deployment
@@ -69,7 +70,11 @@ If you cannot generate a search query, return just the number 0.
         self.content_field = content_field
         self.chatgpt_token_limit = get_token_limit(chatgpt_model)
 
-    def run(self, history: Sequence[dict[str, str]], overrides: dict[str, Any]) -> Any:
+    def run(self, index, history: Sequence[dict[str, str]], overrides: dict[str, Any]) -> Any:
+        self.search_client = SearchClient(
+            endpoint=f"https://{self.search_service}.search.windows.net",
+            index_name=index,
+            credential=self.azure_credential)
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
         use_semantic_captions = True if overrides.get("semantic_captions") and has_text else False

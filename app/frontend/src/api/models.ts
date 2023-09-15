@@ -26,6 +26,7 @@ export type AskRequestOverrides = {
 export type AskRequest = {
     question: string;
     approach: Approaches;
+    index: string;
     overrides?: AskRequestOverrides;
 };
 
@@ -44,6 +45,7 @@ export type ChatTurn = {
 export type ChatRequest = {
     history: ChatTurn[];
     approach: Approaches;
+    index: string;
     overrides?: AskRequestOverrides;
 };
 
@@ -62,3 +64,10 @@ export type ReadyFile = {
 
 
 export type ReadyFiles = ReadyFile[];
+
+export type OptResponse = {
+    value: string;
+    label: string;
+}
+
+export type OptResponses = Array<OptResponse>;

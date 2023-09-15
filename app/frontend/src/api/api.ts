@@ -1,4 +1,4 @@
-import { AskRequest, AskResponse, ChatRequest, Indexes, ReadyFiles } from "./models";
+import { AskRequest, AskResponse, ChatRequest, Indexes, OptResponses, ReadyFiles } from "./models";
 import { FileContent } from "use-file-picker";
 
 export async function askApi(options: AskRequest): Promise<AskResponse> {
@@ -10,6 +10,7 @@ export async function askApi(options: AskRequest): Promise<AskResponse> {
         body: JSON.stringify({
             question: options.question,
             approach: options.approach,
+            index: options.index,
             overrides: {
                 retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
@@ -41,6 +42,7 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
         body: JSON.stringify({
             history: options.history,
             approach: options.approach,
+            index: options.index,
             overrides: {
                 retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
@@ -68,6 +70,23 @@ export function getCitationFilePath(citation: string): string {
     return `/content/${citation}`;
 }
 
+export async function getIndexesAPI(): Promise<OptResponses> {
+    const response = await fetch("/getIndex", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    const parsedResponse: OptResponses = await response.json();
+    if (response.status > 299 || !response.ok) {
+        throw Error("Getting Indexes: Unknown error");
+    }
+
+    return parsedResponse;
+}
+
+
 export async function getReadyFiles(): Promise<ReadyFiles> {
     const response = await fetch("/readyFiles", {
         method: "GET",
@@ -83,6 +102,8 @@ export async function getReadyFiles(): Promise<ReadyFiles> {
 
     return parsedResponse;
 }
+
+
 
 export async function streamToBlob(readableStream: ReadableStream): Promise<Blob> {
     const reader = readableStream.getReader();
@@ -180,12 +201,15 @@ export async function postFile2(fileName:any, fileContent: any): Promise<string>
     
 }
 
-export async function indexReadyFiles(): Promise<String> {
+export async function indexReadyFiles(targetIndex: string): Promise<String> {
     const response = await fetch("/indexUploadedFiles", {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify({
+            history: targetIndex,
+        })
     });
 
     const parsedResponse = await response;

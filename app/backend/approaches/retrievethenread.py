@@ -35,15 +35,20 @@ info4.pdf: In-network institutions include Overlake, Swedish and others in the r
 """
     answer = "In-network deductibles are $500 for employee and $1000 for family [info1.txt] and Overlake is in-network for the employee plan [info2.pdf][info4.pdf]."
 
-    def __init__(self, search_client: SearchClient, openai_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
-        self.search_client = search_client
+    def __init__(self, search_service, azure_credential, openai_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
+        self.azure_credential = azure_credential
+        self.search_service = search_service
         self.openai_deployment = openai_deployment
         self.chatgpt_model = chatgpt_model
         self.embedding_deployment = embedding_deployment
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
 
-    def run(self, q: str, overrides: dict[str, Any]) -> Any:
+    def run(self, index, q: str, overrides: dict[str, Any]) -> Any:
+        self.search_client = SearchClient(
+            endpoint=f"https://{self.search_service}.search.windows.net",
+            index_name=index,
+            credential=self.azure_credential)
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
         use_semantic_captions = True if overrides.get("semantic_captions") and has_text else False

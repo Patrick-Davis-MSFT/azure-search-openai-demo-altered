@@ -393,6 +393,7 @@ output AZURE_FORMRECOGNIZER_KEY string = formRecognizer.outputs.accountKey
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchService.outputs.name
 output AZURE_SEARCH_SERVICE_RESOURCE_GROUP string = searchServiceResourceGroup.name
+output AZURE_SEARCH_SERVICE_KEY string = searchService.outputs.adminKey
 
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = storageContainerName

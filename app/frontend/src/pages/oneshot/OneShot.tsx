@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Checkbox, ChoiceGroup, IChoiceGroupOption, Panel, DefaultButton, Spinner, TextField, SpinButton, IDropdownOption, Dropdown } from "@fluentui/react";
 
 import styles from "./OneShot.module.css";
 
-import { askApi, Approaches, AskResponse, AskRequest, RetrievalMode } from "../../api";
+import { askApi, Approaches, AskResponse, AskRequest, RetrievalMode, OptResponse, OptResponses, getIndexesAPI } from "../../api";
 import { Answer, AnswerError } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
@@ -31,6 +31,24 @@ export function Component(): JSX.Element {
 
     const [activeCitation, setActiveCitation] = useState<string>();
     const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
+    const [searchIndex, setSearchIndex] = useState<OptResponse>({ "value": "default", "label": "Default" } as OptResponse);
+    const [searchIndexOptions, setSearchIndexOptions] = useState<OptResponses>([] as OptResponses);
+
+
+    useEffect(() => {
+        const getIndexes = async () => {
+            if (searchIndexOptions.length > 0) return;
+            const response = await getIndexesAPI();
+            const data = await response;
+            setSearchIndexOptions([]);
+            setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, { "value": "default", "label": "Default" }]);
+            data.forEach((item: OptResponse) => {
+                setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, item]);
+            });
+        };
+        setSearchIndexOptions([]);
+        getIndexes();
+    }, []);
 
     const makeApiRequest = async (question: string) => {
         lastQuestionRef.current = question;
@@ -44,6 +62,7 @@ export function Component(): JSX.Element {
             const request: AskRequest = {
                 question,
                 approach,
+                index: searchIndex.value,
                 overrides: {
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     promptTemplatePrefix: promptTemplatePrefix.length === 0 ? undefined : promptTemplatePrefix,
@@ -99,6 +118,25 @@ export function Component(): JSX.Element {
     const onExcludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
         setExcludeCategory(newValue || "");
     };
+
+    const onIndexChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
+        if (option?.data) {
+            setSearchIndex({ value: option?.data, label: option?.text });
+        }
+    };
+
+    const indexDropdownOptions = (): any[] => {
+        let opt: Array<any> = []
+
+        if (searchIndexOptions.length == 0) return opt;
+        console.log(searchIndexOptions);
+        if (Array.isArray(searchIndexOptions)) {
+            opt = searchIndexOptions.map((item) => {
+                return { key: item.value, text: item.label, selected: searchIndex.value == item.value, data: item.value };
+            });
+        }
+        return opt;
+    }
 
     const onExampleClicked = (example: string) => {
         makeApiRequest(example);
@@ -267,6 +305,13 @@ export function Component(): JSX.Element {
                     ]}
                     required
                     onChange={onRetrievalModeChange}
+                />
+                <Dropdown
+                    className={styles.chatSettingsSeparator}
+                    label="Search Index"
+                    options={indexDropdownOptions()}
+                    required
+                    onChange={onIndexChange}
                 />
             </Panel>
         </div>

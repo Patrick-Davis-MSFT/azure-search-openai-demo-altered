@@ -13,14 +13,19 @@ from text import nonewlines
 from typing import Any, List, Optional
 
 class ReadDecomposeAsk(Approach):
-    def __init__(self, search_client: SearchClient, openai_deployment: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
-        self.search_client = search_client
+    def __init__(self, search_service, azure_credential, openai_deployment: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
+        self.azure_credential = azure_credential
+        self.search_service = search_service
         self.openai_deployment = openai_deployment
         self.embedding_deployment = embedding_deployment
         self.sourcepage_field = sourcepage_field
         self.content_field = content_field
 
-    def search(self, query_text: str, overrides: dict[str, Any]) -> str:
+    def search(self, index, query_text: str, overrides: dict[str, Any]) -> str:
+        self.search_client = SearchClient(
+            endpoint=f"https://{self.search_service}.search.windows.net",
+            index_name=index,
+            credential=self.azure_credential)
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
         use_semantic_captions = True if overrides.get("semantic_captions") and has_text else False

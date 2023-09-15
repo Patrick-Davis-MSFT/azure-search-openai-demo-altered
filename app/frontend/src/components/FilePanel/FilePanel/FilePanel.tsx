@@ -1,11 +1,11 @@
-import { CommandButton, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, List, Panel, Text, TextField } from "@fluentui/react";
+import { CommandButton, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, IDropdownOption, List, Panel, Text, TextField } from "@fluentui/react";
 //using https://github.com/Jaaneek/useFilePicker
 import { useFilePicker, FileContent, FileError } from 'use-file-picker';
 
 
 import styles from "./FilePanel.module.css";
 import { MouseEventHandler, useEffect, useRef, useState } from "react";
-import { ReadyFile, getReadyFiles, indexReadyFiles, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
+import { OptResponse, OptResponses, ReadyFile, RetrievalMode, getIndexesAPI, getReadyFiles, indexReadyFiles, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
 import { Document24Regular, Delete24Regular } from "@fluentui/react-icons";
 
 interface Props {
@@ -23,6 +23,27 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     const [uploadList, setUploadList] = useState<FileContent[]>([]); //list of files to upload
     const [uploadIndexDisabled, setUploadIndexDisabled] = useState<boolean>(false); //disable index button
     const [error, setError] = useState<string | null>(null);
+    const [searchIndex, setSearchIndex] = useState<OptResponse>({ "value": "default", "label": "Default" } as OptResponse);
+    const [searchIndexOptions, setSearchIndexOptions] = useState<OptResponses>([] as OptResponses);
+    const [addIndex, setAddIndex] = useState<string>("" as string);
+    const [disableAddIndex, setDisableAddIndex] = useState<boolean>(false);
+
+
+    useEffect(() => {
+        const getIndexes = async () => {
+            if (searchIndexOptions.length > 0) return;
+            const response = await getIndexesAPI();
+            const data = await response;
+            setSearchIndexOptions([]);
+            setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, { "value": "default", "label": "Default" }]);
+            data.forEach((item: OptResponse) => {
+                setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, item]);
+            });
+        };
+        setSearchIndexOptions([]);
+        getIndexes();
+    }, []);
+
     const setReadyFileList = async () => {
         const fileIdx = await getReadyFiles();
         setUploadedFileList(fileIdx);
@@ -32,7 +53,7 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     const callIndexFiles = async () => {
         try {
             setError("Indexing... (This can take some time)")
-            const retValue = await indexReadyFiles();
+            const retValue = await indexReadyFiles(searchIndex.value);
             console.log(retValue);
             await setReadyFileList();
         }
@@ -153,6 +174,39 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         }
         setFileUploading(false);
     }
+
+    const indexDropdownOptions = (): any[] => {
+        let opt: Array<any> = []
+
+        if (searchIndexOptions.length == 0) return opt;
+        if (Array.isArray(searchIndexOptions)) {
+            opt = searchIndexOptions.map((item) => {
+                return { key: item.value, text: item.label, selected: searchIndex.value == item.value, data: item.value };
+            });
+        }
+        return opt;
+    }
+
+    const onIndexChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
+        if (option?.data) {
+            setSearchIndex({ value: option?.data, label: option?.text });
+        }
+    };
+
+    const onAddIndexChange = (_ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
+        if (!newValue) { return; }
+        if (newValue.length <= 25) {
+            setAddIndex(newValue);
+        }
+    };
+
+    const addIndexBtn = () => {
+        const newIndex: OptResponse = { "value": addIndex, "label": addIndex };
+        setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, newIndex]);
+        setSearchIndex(newIndex);
+        setDisableAddIndex(true);
+    }
+
     return (
         <Panel
             headerText="File Indexing"
@@ -163,6 +217,16 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
             onRenderFooterContent={() => <DefaultButton onClick={() => close(false)}>Close</DefaultButton>}
             isFooterAtBottom={true}
         >
+            <Dropdown
+                className={styles.chatSettingsSeparator}
+                label="Search Index"
+                options={indexDropdownOptions()}
+                required
+                onChange={onIndexChange}
+            />
+            {disableAddIndex ? null : <>
+                <TextField label="Add Index" value={addIndex} onChange={onAddIndexChange} />
+                <DefaultButton className={styles.buttonSpace} onClick={() => addIndexBtn()} disabled={uploadIndexDisabled}>Add</DefaultButton> </>}
             <hr />
             {fileUploading ? <h3>File Uploading... Please Wait</h3> : <>
                 <h3>File Upload</h3>
@@ -178,13 +242,6 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
                 </form></>}
 
             <hr />
-            {/*<h3>Files to Upload</h3>
-            <DefaultButton onClick={() => openFileSelector()}>Select Files</DefaultButton>
-            {uploadList.length > 0 ? (<><h4>Selected Files</h4>
-                <List items={uploadList} onRenderCell={onRenderCell} />
-                <DefaultButton className={styles.buttonSpace} onClick={() => UploadFile()}>Upload</DefaultButton>
-            </>) : null}
-            <hr />*/}
             <h3>Ready for Indexing</h3>
             <div>
 

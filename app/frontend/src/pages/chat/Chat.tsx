@@ -4,7 +4,7 @@ import { SparkleFilled } from "@fluentui/react-icons";
 
 import styles from "./Chat.module.css";
 
-import { chatApi, RetrievalMode, Approaches, AskResponse, ChatRequest, ChatTurn } from "../../api";
+import { chatApi, RetrievalMode, Approaches, AskResponse, ChatRequest, ChatTurn, OptResponse, OptResponses, getIndexesAPI } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
@@ -23,6 +23,26 @@ const Chat = () => {
     const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
     const [excludeCategory, setExcludeCategory] = useState<string>("");
     const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(false);
+    const [searchIndex, setSearchIndex] = useState<OptResponse>({ "value": "default", "label": "Default" } as OptResponse);
+    const [searchIndexOptions, setSearchIndexOptions] = useState<OptResponses>([] as OptResponses);
+
+
+    useEffect(() => {
+        const getIndexes = async () => {
+            if (searchIndexOptions.length > 0) return;
+            const response = await getIndexesAPI();
+            const data = await response;
+            setSearchIndexOptions([]);
+            setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, { "value": "default", "label": "Default" }]);
+            data.forEach((item: OptResponse) => {
+                setSearchIndexOptions((searchIndexOptions) => [...searchIndexOptions, item]);
+            });
+        };
+        setSearchIndexOptions([]);
+        getIndexes();
+    }, []);
+
+
 
     const lastQuestionRef = useRef<string>("");
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -49,6 +69,7 @@ const Chat = () => {
             const request: ChatRequest = {
                 history: [...history, { user: question, bot: undefined }],
                 approach: Approaches.ReadRetrieveRead,
+                index: searchIndex.value,
                 overrides: {
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
@@ -88,6 +109,12 @@ const Chat = () => {
 
     const onRetrievalModeChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
         setRetrievalMode(option?.data || RetrievalMode.Hybrid);
+    };
+
+    const onIndexChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
+        if (option?.data) {
+            setSearchIndex({ value: option?.data, label: option?.text });
+        }
     };
 
     const onUseSemanticRankerChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
@@ -144,6 +171,18 @@ const Chat = () => {
         if (WhiteBoxModel.chatLogoOverride) {
             chatLogo = WhiteBoxModel.chatLogo;
         }
+    }
+
+    const indexDropdownOptions = (): any[] => {
+        let opt: Array<any> = []
+
+        if (searchIndexOptions.length == 0) return opt;
+        if (Array.isArray(searchIndexOptions)) {
+            opt = searchIndexOptions.map((item) => {
+                return { key: item.value, text: item.label, selected: searchIndex.value == item.value, data: item.value };
+            });
+        }
+        return opt;
     }
 
     return (
@@ -277,6 +316,13 @@ const Chat = () => {
                         ]}
                         required
                         onChange={onRetrievalModeChange}
+                    />
+                    <Dropdown
+                        className={styles.chatSettingsSeparator}
+                        label="Search Index"
+                        options={indexDropdownOptions()}
+                        required
+                        onChange={onIndexChange}
                     />
                 </Panel>
             </div>

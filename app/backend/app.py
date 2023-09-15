@@ -12,6 +12,7 @@ from io import BytesIO
 from flask import Flask, request, jsonify, send_file, abort
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
+from azure.search.documents.indexes import SearchIndexClient
 from approaches.retrievethenread import RetrieveThenReadApproach
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.readdecomposeask import ReadDecomposeAsk
@@ -97,13 +98,13 @@ blob_container = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
 # or some derivative, here we include several for exploration purposes
 ask_approaches = {
-    "rtr": RetrieveThenReadApproach(search_client, AZURE_OPENAI_CHATGPT_DEPLOYMENT, AZURE_OPENAI_CHATGPT_MODEL, AZURE_OPENAI_EMB_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT),
-    "rrr": ReadRetrieveReadApproach(search_client, AZURE_OPENAI_GPT_DEPLOYMENT, AZURE_OPENAI_EMB_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT),
-    "rda": ReadDecomposeAsk(search_client, AZURE_OPENAI_GPT_DEPLOYMENT, AZURE_OPENAI_EMB_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT)
+    "rtr": RetrieveThenReadApproach(AZURE_SEARCH_SERVICE, azure_credential, AZURE_OPENAI_CHATGPT_DEPLOYMENT, AZURE_OPENAI_CHATGPT_MODEL, AZURE_OPENAI_EMB_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT),
+    "rrr": ReadRetrieveReadApproach(AZURE_SEARCH_SERVICE, azure_credential, AZURE_OPENAI_GPT_DEPLOYMENT, AZURE_OPENAI_EMB_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT),
+    "rda": ReadDecomposeAsk(AZURE_SEARCH_SERVICE, azure_credential, AZURE_OPENAI_GPT_DEPLOYMENT, AZURE_OPENAI_EMB_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT)
 }
 
 chat_approaches = {
-    "rrr": ChatReadRetrieveReadApproach(search_client, 
+    "rrr": ChatReadRetrieveReadApproach(AZURE_SEARCH_SERVICE, azure_credential, 
                                         AZURE_OPENAI_CHATGPT_DEPLOYMENT,
                                         AZURE_OPENAI_CHATGPT_MODEL, 
                                         AZURE_OPENAI_EMB_DEPLOYMENT,
@@ -117,6 +118,7 @@ app = Flask(__name__)
 @app.route("/<path:path>")
 def static_file(path):
     return app.send_static_file(path)
+
 
 # Serve content files from blob storage from within the app to keep the example self-contained. 
 # *** NOTE *** this assumes that the content files are public, or at least that all users of the app
@@ -133,7 +135,23 @@ def content_file(path):
     blob.readinto(blob_file)
     blob_file.seek(0)
     return send_file(blob_file, mimetype=mime_type, as_attachment=False, download_name=path)
+
+@app.route("/getIndex", methods=["GET"])
+def getIndex():
+    ensure_openai_token()
+    try:
+        key = AzureKeyCredential(os.environ.get("AZURE_SEARCH_SERVICE_KEY") or "key")
+        index_client = SearchIndexClient(endpoint=f"https://gptkb-hvozji4axlz54.search.windows.net", credential=key)
+        retVal = []
+        for index in index_client.list_index_names():
+            retVal.append({"value": str(index), "label": str(index)})
+        return jsonify(retVal)
+    except Exception as e:
+        logging.exception("Exception in /ask")
+        return jsonify({"error": str(e)}), 500
     
+
+
 @app.route("/ask", methods=["POST"])
 def ask():
     ensure_openai_token()
@@ -142,9 +160,12 @@ def ask():
     approach = request.json["approach"]
     try:
         impl = ask_approaches.get(approach)
+        index = str(request.json["index"])
+        if index.lower() == 'default':
+            index = AZURE_SEARCH_INDEX
         if not impl:
             return jsonify({"error": "unknown approach"}), 400
-        r = impl.run(request.json["question"], request.json.get("overrides") or {})
+        r = impl.run(index, request.json["question"], request.json.get("overrides") or {})
         return jsonify(r)
     except Exception as e:
         logging.exception("Exception in /ask")
@@ -158,9 +179,12 @@ def chat():
     approach = request.json["approach"]
     try:
         impl = chat_approaches.get(approach)
+        index = str(request.json["index"])
+        if index.lower() == 'default':
+            index = AZURE_SEARCH_INDEX
         if not impl:
             return jsonify({"error": "unknown approach"}), 400
-        r = impl.run(request.json["history"], request.json.get("overrides") or {})
+        r = impl.run(index, request.json["history"], request.json.get("overrides") or {})
         return jsonify(r)
     except Exception as e:
         logging.exception("Exception in /chat")
@@ -242,6 +266,9 @@ def indexUploadedFiles():
         open_ai_token_cache[CACHE_KEY_CREATED_TIME] = time.time()
         open_ai_token_cache[CACHE_KEY_TOKEN_CRED] = azure_credential
         open_ai_token_cache[CACHE_KEY_TOKEN_TYPE] = "azure_ad"
+        
+        if index.lower == "default":
+            index = AZURE_SEARCH_INDEX
         # Get a list of all blobs in a container
         blobs = container_client.list_blobs()
         files = []
@@ -274,8 +301,8 @@ def indexUploadedFiles():
             sys.stdout.flush()   
             page_map = get_document_text(file.name, blob_service_client, container_client)
             use_vectors = True
-            sections = create_sections(file.name, page_map, use_vectors)
-            index_sections(file.name, sections)
+            sections = create_sections(index, file.name, page_map, use_vectors)
+            index_sections(index, file.name, sections)
             #Remove File after indexing
             container_client.delete_blob(file.name)
 
@@ -300,10 +327,10 @@ def blob_name_from_file_page(filename, page = 0):
         return os.path.basename(filename)
 
 
-def index_sections(filename, sections):
+def index_sections(index, filename, sections):
     print(f"Indexing sections from '{filename}' into search index '{AZURE_SEARCH_INDEX}'")
     search_client = SearchClient(endpoint=f"https://{AZURE_SEARCH_SERVICE}.search.windows.net/",
-                                    index_name=AZURE_SEARCH_INDEX,
+                                    index_name=index,
                                     credential=azure_credential)
     i = 0
     batch = []
