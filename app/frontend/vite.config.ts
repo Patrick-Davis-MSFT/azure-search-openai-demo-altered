@@ -31,7 +31,8 @@ export default defineConfig({
             "/readyFiles": "http://127.0.0.1:5000",
             "/indexUploadedFiles": "http://127.0.0.1:5000",
             "/removeStagedFile":  "http://127.0.0.1:5000",
-            "/getIndex":  "http://127.0.0.1:5000"
+            "/getIndex":  "http://127.0.0.1:5000",
+            "/indexUploadedFilesStream":  "http://127.0.0.1:5000"
         }
     }
 });

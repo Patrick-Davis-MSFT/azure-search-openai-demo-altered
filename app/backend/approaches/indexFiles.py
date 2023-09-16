@@ -32,16 +32,14 @@ from azure.search.documents.indexes.models import (
 from pypdf import PdfReader, PdfWriter
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-class indexResumeFiles():
-    def __init__(self, storageAcct:str, stagingContainer: str, indexContainer: str, indexFullContainer: str, formAnalyzer: str,formAnalyzerKey: str, cognitiveSearch: str, cognitiveSearchIndex: str, embDeployment: str, aoaiService: str):
+class indexFiles():
+    def __init__(self, storageAcct:str, stagingContainer: str, indexContainer: str, formAnalyzer: str,formAnalyzerKey: str, cognitiveSearch: str, embDeployment: str, aoaiService: str):
         self.storageAcct = storageAcct
         self.stagingContainer = stagingContainer
         self.indexContainer = indexContainer
-        self.indexFullContainer = indexFullContainer
         self.formAnalyzer = formAnalyzer
         self.formAnalyzerKey = formAnalyzerKey
         self.cognitiveSearch = cognitiveSearch
-        self.cognitiveSearchIndex = cognitiveSearchIndex
         self.embDeployment = embDeployment
         self.aoaiService = aoaiService
         self.chatgpt_token_limit = 5000 #get_token_limit(chatgpt_model)
@@ -55,14 +53,14 @@ class indexResumeFiles():
         self.KB_FIELDS_SOURCEPAGE = os.environ.get("KB_FIELDS_SOURCEPAGE") or "sourcepage"
 
         
-    def run(self, openAIAuth, azure_credential, printAPI: queue.Queue): 
+    def run(self, cognitiveSearchIndex, openAIAuth, azure_credential, printAPI: queue.Queue): 
+        self.cognitiveSearchIndex = cognitiveSearchIndex 
         self.printAPI = printAPI
-        print("run indexResumeFiles")
+        print("running indexFiles\n")
         printAPI.put("Processing Files...")
         blob_service_client = BlobServiceClient(account_url=f"https://" + self.storageAcct + ".blob.core.windows.net", credential=azure_credential)
         container_client = blob_service_client.get_container_client(self.stagingContainer)
         upload_client = blob_service_client.get_container_client(self.indexContainer)
-        upload_full_client = blob_service_client.get_container_client(self.indexFullContainer)
 
         self.printAPI.put("Generating Search Keys..." )
         openai.api_key = azure_credential.get_token("https://cognitiveservices.azure.com/.default").token
@@ -74,7 +72,7 @@ class indexResumeFiles():
         
         self.printAPI.put("Stage 1 Chunking...")
         # Split PDF files into pages
-        self.splitPDF(container_client, upload_client, upload_full_client)
+        self.splitPDF(container_client, upload_client)
 
         
         self.printAPI.put("Stage 2 Check Index...")
@@ -100,8 +98,9 @@ class indexResumeFiles():
         return {"status": "Index Completed"}
     
     def create_index(self, azure_credential):
+        key = AzureKeyCredential(os.environ.get("AZURE_SEARCH_SERVICE_KEY") or "key")
         print(f"Checking for search index '{self.cognitiveSearchIndex}' in search service '{self.cognitiveSearch}'")
-        search_client = SearchIndexClient(endpoint=f"https://{self.cognitiveSearch}.search.windows.net/", credential=azure_credential)
+        search_client = SearchIndexClient(endpoint=f"https://{self.cognitiveSearch}.search.windows.net/", credential=key)
         
         #check index exists
         try:    
@@ -110,8 +109,8 @@ class indexResumeFiles():
                 self.printAPI.put(f"Index '{self.cognitiveSearchIndex}' already exists, skipping creation")
                 return
         except: 
-            print(f"\tIndex '{self.cognitiveSearchIndex}' does not exist, creating...")
-            self.printAPI.put(f"Index '{self.cognitiveSearchIndex}' does not exist, creating...")
+            print(f"\tIndex '{self.cognitiveSearchIndex}' does not exist on '{self.cognitiveSearch}', creating...")
+            self.printAPI.put(f"Index '{self.cognitiveSearchIndex}' does not exist on '{self.cognitiveSearch}', creating...")
             index = SearchIndex(
                 name=self.cognitiveSearchIndex,
                 fields=[
@@ -139,8 +138,14 @@ class indexResumeFiles():
                         ]
                     )
                 )
-
-            search_client.create_index(index)
+            try:
+                search_client.create_index(index)
+            except Exception as ex:
+                print(str(ex))
+                self.printAPI.put(f"Error Creating Index: '{str(ex)}'")
+                raise (ex)
+            finally:
+                i=0
         finally:
             return
 
@@ -335,7 +340,7 @@ class indexResumeFiles():
         table_html += "</table>"
         return table_html
 
-    def splitPDF(self, staging_cc, search_cc, full_cc) -> None:
+    def splitPDF(self, staging_cc, search_cc) -> None:
         blobs = staging_cc.list_blobs()
         files = []
         
@@ -351,7 +356,6 @@ class indexResumeFiles():
                 # convert to pdf and split pages for pdf files
                 pdf = PdfReader(BytesIO(pdf_bytes))
                 pages = pdf.pages
-                full_cc.upload_blob(blob.name, pdf_bytes, overwrite=True)
                 for i in range(len(pages)):
                     blob_name = blob.name[:-len(".pdf")] + "-" + str(i) + ".pdf"
                     f = io.BytesIO()

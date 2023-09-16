@@ -4,12 +4,14 @@ import mimetypes
 import time
 import logging
 import openai
+import threading
+import queue
 import sys
 import re
 import base64
 import html
 from io import BytesIO
-from flask import Flask, request, jsonify, send_file, abort
+from flask import Flask, request, jsonify, send_file, abort, Response
 from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
@@ -17,6 +19,7 @@ from approaches.retrievethenread import RetrieveThenReadApproach
 from approaches.readretrieveread import ReadRetrieveReadApproach
 from approaches.readdecomposeask import ReadDecomposeAsk
 from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
+from approaches.indexFiles import indexFiles
 from azure.storage.blob import BlobServiceClient
 from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
@@ -111,6 +114,18 @@ chat_approaches = {
                                         KB_FIELDS_SOURCEPAGE, 
                                         KB_FIELDS_CONTENT)
 }
+
+indexFiles_approaches = {
+    "irf": indexFiles(AZURE_STORAGE_ACCOUNT,
+                            AZURE_STAGING_CONTAINER, 
+                            AZURE_STORAGE_CONTAINER,
+                            AZURE_FORMRECOGNIZER_SERVICE, 
+                            AZURE_FORMRECOGNIZER_KEY, 
+                            AZURE_SEARCH_SERVICE, 
+                            AZURE_OPENAI_EMB_DEPLOYMENT, 
+                            AZURE_OPENAI_SERVICE)
+}
+
 
 app = Flask(__name__)
 
@@ -251,9 +266,41 @@ def upload():
         logging.exception("Exception in /upload")
         return jsonify({"error": str(e)}), 500
 
-@app.route("/indexUploadedFiles", methods=["GET"])
+@app.route("/indexUploadedFilesStream", methods=["POST"])
+def indexUploadedFilesStream():
+    ensure_openai_token()
+    if not request.json:
+        return jsonify({"error": "request must be json"}), 400
+    
+    out = queue.Queue()
+
+    index = str(request.json["index"])
+    if index.lower() == "default":
+        index = AZURE_SEARCH_INDEX
+    def indexProcess(n,index, out:queue.Queue):
+        approach = "irf"
+        impl = indexFiles_approaches.get(approach)
+        #TODO: Fix this to actually work
+        impl.run(index, openai_token, azure_credential, out) 
+
+    thread = threading.Thread(target=indexProcess, args=(1,index, out))
+    thread.start()
+    
+    def generate():
+        while(thread.is_alive()):
+            apiResult:str = None
+            if not out.empty():
+                apiResult = out.get()
+            if apiResult is not None:
+                yield apiResult + "\n"
+    
+    return Response(generate(), mimetype='text/plain')
+
+@app.route("/indexUploadedFiles", methods=["POST"])
 def indexUploadedFiles():
     ensure_openai_token()
+    if not request.json:
+        return jsonify({"error": "request must be json"}), 400
     try:
         # Connect to Azure Storage
         blob_service_client = BlobServiceClient(account_url=f"https://" + AZURE_STORAGE_ACCOUNT + ".blob.core.windows.net", credential=azure_credential)
@@ -267,7 +314,8 @@ def indexUploadedFiles():
         open_ai_token_cache[CACHE_KEY_TOKEN_CRED] = azure_credential
         open_ai_token_cache[CACHE_KEY_TOKEN_TYPE] = "azure_ad"
         
-        if index.lower == "default":
+        index = str(request.json["index"])
+        if index.lower() == "default":
             index = AZURE_SEARCH_INDEX
         # Get a list of all blobs in a container
         blobs = container_client.list_blobs()
@@ -301,7 +349,7 @@ def indexUploadedFiles():
             sys.stdout.flush()   
             page_map = get_document_text(file.name, blob_service_client, container_client)
             use_vectors = True
-            sections = create_sections(index, file.name, page_map, use_vectors)
+            sections = create_sections(file.name, page_map, use_vectors)
             index_sections(index, file.name, sections)
             #Remove File after indexing
             container_client.delete_blob(file.name)

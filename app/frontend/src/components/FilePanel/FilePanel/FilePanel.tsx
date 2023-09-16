@@ -5,7 +5,7 @@ import { useFilePicker, FileContent, FileError } from 'use-file-picker';
 
 import styles from "./FilePanel.module.css";
 import { MouseEventHandler, useEffect, useRef, useState } from "react";
-import { OptResponse, OptResponses, ReadyFile, RetrievalMode, getIndexesAPI, getReadyFiles, indexReadyFiles, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
+import { OptResponse, OptResponses, ReadyFile, RetrievalMode, getIndexesAPI, getReadyFiles, indexReadyFiles, indexReadyFilesStream, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
 import { Document24Regular, Delete24Regular } from "@fluentui/react-icons";
 
 interface Props {
@@ -50,11 +50,17 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         return true;
     };
 
+    const getStreamOutput = (data: string) => {
+        setError(data);
+    }
+
     const callIndexFiles = async () => {
         try {
             setError("Indexing... (This can take some time)")
-            const retValue = await indexReadyFiles(searchIndex.value);
+            //const retValue = await indexReadyFiles(searchIndex.value);
+            const retValue = await indexReadyFilesStream(searchIndex.value, getStreamOutput);
             console.log(retValue);
+
             await setReadyFileList();
         }
         catch (error: any) {
@@ -194,7 +200,7 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     };
 
     const onAddIndexChange = (_ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
-        if (!newValue) { return; }
+        if (!newValue) { setAddIndex(""); return; }
         if (newValue.length <= 25) {
             setAddIndex(newValue);
         }
