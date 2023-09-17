@@ -121,6 +121,7 @@ module backend 'core/host/appservice.bicep' = {
       AZURE_OPENAI_SERVICE: openAi.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchService.outputs.name
+      AZURE_SEARCH_SERVICE_KEY: searchService.outputs.adminKey
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
       AZURE_OPENAI_CHATGPT_MODEL: chatGptModelName

@@ -101,6 +101,7 @@ class indexFiles():
         key = AzureKeyCredential(os.environ.get("AZURE_SEARCH_SERVICE_KEY") or "key")
         print(f"Checking for search index '{self.cognitiveSearchIndex}' in search service '{self.cognitiveSearch}'")
         search_client = SearchIndexClient(endpoint=f"https://{self.cognitiveSearch}.search.windows.net/", credential=key)
+        #search_client = SearchIndexClient(endpoint=f"https://{self.cognitiveSearch}.search.windows.net/", credential=azure_credential)
         
         #check index exists
         try:    
