@@ -1,12 +1,13 @@
-import { CommandButton, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, IDropdownOption, List, Panel, Text, TextField } from "@fluentui/react";
+import { CommandButton, ContextualMenu, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, IDragOptions, IDropdownOption, List, Modal, Panel, Stack, Text, TextField, mergeStyles } from "@fluentui/react";
 //using https://github.com/Jaaneek/useFilePicker
-import { useFilePicker, FileContent, FileError } from 'use-file-picker';
+import { useId, useBoolean } from '@fluentui/react-hooks';
 
 
 import styles from "./FilePanel.module.css";
 import { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { OptResponse, OptResponses, ReadyFile, RetrievalMode, getIndexesAPI, getReadyFiles, indexReadyFiles, indexReadyFilesStream, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
 import { Document24Regular, Delete24Regular } from "@fluentui/react-icons";
+import React from "react";
 
 interface Props {
     className?: string;
@@ -20,13 +21,13 @@ interface Props {
 export const FilePanel = ({ className, show, close, setIndex }: Props) => {
 
     const [uploadedFileList, setUploadedFileList] = useState<ReadyFile[]>([]);
-    const [uploadList, setUploadList] = useState<FileContent[]>([]); //list of files to upload
     const [uploadIndexDisabled, setUploadIndexDisabled] = useState<boolean>(false); //disable index button
     const [error, setError] = useState<string | null>(null);
     const [searchIndex, setSearchIndex] = useState<OptResponse>({ "value": "default", "label": "Default" } as OptResponse);
     const [searchIndexOptions, setSearchIndexOptions] = useState<OptResponses>([] as OptResponses);
     const [addIndex, setAddIndex] = useState<string>("" as string);
     const [disableAddIndex, setDisableAddIndex] = useState<boolean>(false);
+    const [streamOutput, setStreamOutput] = useState<string>("");
 
 
     useEffect(() => {
@@ -51,22 +52,28 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     };
 
     const getStreamOutput = (data: string) => {
-        setError(data);
+        setStreamOutput(data);
+    }
+
+    function delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     const callIndexFiles = async () => {
         try {
-            setError("Indexing... (This can take some time)")
+            showModal();
             //const retValue = await indexReadyFiles(searchIndex.value);
             const retValue = await indexReadyFilesStream(searchIndex.value, getStreamOutput);
             console.log(retValue);
-
             await setReadyFileList();
+            await delay(2500);
+            hideModal();
         }
         catch (error: any) {
             console.log(error);
             alert(`An error occurred: ${error.message}`);
             setError(error.message);
+            hideModal();
         }
         setError(null);
         setUploadIndexDisabled(false);
@@ -82,57 +89,6 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         }
         run();
     }, []);
-
-    const UploadFile = () => {
-        const run = async (f: FileContent) => {
-            const sentFile = await postFile(f);
-            await setReadyFileList();
-            return true;
-        };
-        try {
-            uploadList.forEach((f) => {
-                const sentFile = run(f);
-                console.log("Finished" + sentFile);
-            });
-        }
-        catch (error: any) {
-            console.log(error);
-            alert(`An error occurred: ${error.message}`);
-            setError(error.message);
-        }
-        setUploadList([]);
-    };
-
-    const addUploadList = (file: FileContent) => {
-        var newUploadList = [...uploadList];
-        newUploadList.push(file);
-        setUploadList(newUploadList);
-    };
-    const [openFileSelector, { filesContent, loading }] = useFilePicker({
-        accept: ['.csv', '.json', '.txt', '.tsv', '.xlsx', '.xls', '.xml', '.docx', '.doc', '.pdf'],
-        limitFilesConfig: { min: 1, max: 3 },
-        maxFileSize: 500, // in megabytes
-        onFilesSelected: ({ plainFiles, filesContent, errors }) => {
-            // this callback is always called, even if there are errors
-            console.log('onFilesSelected', plainFiles, filesContent);
-            if (filesContent) {
-                filesContent.forEach((f: FileContent) => addUploadList(f));
-                //postFile2(plainFiles[0].name, filesContent[0])
-            }
-            if (errors) {
-                errors.forEach((e: FileError) => alert("ERROR: " + e.name));
-            }
-        },
-    });
-
-    /*const onRenderCell = (item?: FileContent, index?: number | undefined): JSX.Element | null => {
-        if (!item) return null;
-        return (<>
-            <div className={styles.fileOptContainer}>
-                <span className={styles.fileOption}><Document24Regular /> {item.name}</span>
-            </div>
-        </>);
-    };*/
 
     const removeItem = (name: string) => {
         setUploadIndexDisabled(true);
@@ -213,49 +169,89 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         setDisableAddIndex(true);
     }
 
+
+    const [isModalOpen, { setTrue: showModal, setFalse: hideModal }] = useBoolean(false);
+    const [isDraggable, { toggle: toggleIsDraggable }] = useBoolean(false);
+    const [keepInBounds, { toggle: toggleKeepInBounds }] = useBoolean(false);
+    const dragOptions = React.useMemo(
+        (): IDragOptions => ({
+            moveMenuItemText: 'Move',
+            closeMenuItemText: 'Close',
+            menu: ContextualMenu,
+            keepInBounds,
+            dragHandleSelector: '.ms-Modal-scrollableContent > div:first-child',
+        }),
+        [keepInBounds],
+    );
+    const modalTitleId = useId('modalId');
+
+
     return (
-        <Panel
-            headerText="File Indexing"
-            isOpen={show}
-            isBlocking={false}
-            onDismiss={() => close(false)}
-            closeButtonAriaLabel="Close File Indexing"
-            onRenderFooterContent={() => <DefaultButton onClick={() => close(false)}>Close</DefaultButton>}
-            isFooterAtBottom={true}
-        >
-            <Dropdown
-                className={styles.chatSettingsSeparator}
-                label="Search Index"
-                options={indexDropdownOptions()}
-                required
-                onChange={onIndexChange}
-            />
-            {disableAddIndex ? null : <>
-                <TextField label="Add Index" value={addIndex} onChange={onAddIndexChange} />
-                <DefaultButton className={styles.buttonSpace} onClick={() => addIndexBtn()} disabled={uploadIndexDisabled}>Add</DefaultButton> </>}
-            <hr />
-            {fileUploading ? <h3>File Uploading... Please Wait</h3> : <>
-                <h3>File Upload</h3>
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                    />
-                    <button type="submit" disabled={!file}>
-                        Upload
-                    </button>
-                </form></>}
+        <>
+            <Panel
+                headerText="File Indexing"
+                isOpen={show}
+                isBlocking={false}
+                onDismiss={() => close(false)}
+                closeButtonAriaLabel="Close File Indexing"
+                onRenderFooterContent={() => <DefaultButton onClick={() => close(false)}>Close</DefaultButton>}
+                isFooterAtBottom={true}
+            >
+                <Dropdown
+                    className={styles.chatSettingsSeparator}
+                    label="Search Index"
+                    options={indexDropdownOptions()}
+                    required
+                    onChange={onIndexChange}
+                />
+                {disableAddIndex ? null : <>
+                    <TextField label="Add Index" value={addIndex} onChange={onAddIndexChange} />
+                    <DefaultButton className={styles.buttonSpace} onClick={() => addIndexBtn()} disabled={uploadIndexDisabled}>Add</DefaultButton> </>}
+                <hr />
+                {fileUploading ? <h3>File Uploading... Please Wait</h3> : <>
+                    <h3>File Upload</h3>
+                    <form onSubmit={handleSubmit}>
+                        <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                        />
+                        <button type="submit" disabled={!file || uploadedFileList.length > 4}>
+                            {uploadedFileList.length > 4 ? "Indexing Limit Reached" : "Upload"}
+                        </button>
+                    </form>
+                    <small>Only PDF and up to 5</small>
+                </>}
 
-            <hr />
-            <h3>Ready for Indexing</h3>
-            <div>
+                <hr />
+                <h3>Ready for Indexing</h3>
+                <div>
 
-                <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled}>Upload Index</DefaultButton>
-                <List items={uploadedFileList} onRenderCell={onRenderCellFiles} />
-                {error ? <Text variant="large" style={{ color: "red" }}>{error}</Text> : null}
-            </div>
+                    <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled}>Upload Index</DefaultButton>
+                    <List items={uploadedFileList} onRenderCell={onRenderCellFiles} />
+                    {error ? <Text variant="large" style={{ color: "red" }}>{error}</Text> : null}
+                </div>
 
-        </Panel>
+            </Panel>
+            <Modal
+                titleAriaId={modalTitleId}
+                isOpen={isModalOpen}
+                onDismiss={hideModal}
+                isBlocking={true}
+                containerClassName={mergeStyles(styles.modalContainer)}
+                dragOptions={isDraggable ? dragOptions : undefined}>
+
+                <Stack enableScopedSelectors>
+                    <Stack.Item className={styles.overlayContent}>
+                        <div className={mergeStyles(styles.modalHeader)}>
+                            <h2>Indexing Files...</h2>
+                        </div>
+                    </Stack.Item>
+                    <Stack.Item align="center" className={styles.overlayContent}>
+                        <pre className={mergeStyles(styles.indexOut)}>{streamOutput}</pre>
+                    </Stack.Item>
+                </Stack>
+            </Modal>
+        </>
     );
 };

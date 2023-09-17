@@ -244,4 +244,6 @@ export async function indexReadyFilesStream(targetIndex: string, setReturn: (res
         result += newValue + "\n";
         setReturn(result);
     }
+    
+    setReturn(result + "\n\n-------------------------------------\n\nIndexing Complete\n\n-------------------------------------\n\n");
 }

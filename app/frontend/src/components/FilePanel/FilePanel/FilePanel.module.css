@@ -6,3 +6,47 @@
     height: 10em;
     width: 100%;
 }
+
+.modalContainer {
+    display: 'flex';
+    flex-flow: 'column nowrap';
+    align-items: 'stretch';
+    height: 75%;
+    width: 75%;
+  }
+
+  .modalHeader {flex: '1 1 auto';
+    border-top: 4px solid black;
+    color: rgb(0, 0, 0);
+    display: 'flex';
+    float:left;
+    width: 100%;
+    align-items: 'center';
+    font-weight: semibold;
+    padding: '12px 12px 14px 24px';
+    font-size: x-large;
+}
+.modalHeader > h2 {
+    padding-left: 15px;
+}
+.overlayContent{
+    font-weight: 900;
+    font-size: xx-large;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    justify-content: left;
+    overflow: 'hidden';
+    vertical-align: middle;
+ }
+ .indexOut {
+    overflow: auto !important;
+    color: rgb(4, 44, 0);
+    max-height: 38em;
+    width: 80%;
+    display: flex;
+    padding-left: 25px;
+    vertical-align: middle;
+    flex-direction: column-reverse;
+    font-size: medium;
+ }
