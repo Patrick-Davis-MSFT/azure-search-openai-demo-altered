@@ -199,13 +199,13 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
             >
                 <Dropdown
                     className={styles.chatSettingsSeparator}
-                    label="Search Index"
+                    label="Index to Load..."
                     options={indexDropdownOptions()}
                     required
                     onChange={onIndexChange}
                 />
                 {disableAddIndex ? null : <>
-                    <TextField label="Add Index" value={addIndex} onChange={onAddIndexChange} />
+                    <TextField label="Add Index to list:" value={addIndex} onChange={onAddIndexChange} />
                     <DefaultButton className={styles.buttonSpace} onClick={() => addIndexBtn()} disabled={uploadIndexDisabled}>Add</DefaultButton> </>}
                 <hr />
                 {fileUploading ? <h3>File Uploading... Please Wait</h3> : <>
@@ -227,7 +227,7 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
                 <h3>Ready for Indexing</h3>
                 <div>
 
-                    <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled}>Upload Index</DefaultButton>
+                    <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled || uploadedFileList.length == 0}>Upload Index</DefaultButton>
                     <List items={uploadedFileList} onRenderCell={onRenderCellFiles} />
                     {error ? <Text variant="large" style={{ color: "red" }}>{error}</Text> : null}
                 </div>
