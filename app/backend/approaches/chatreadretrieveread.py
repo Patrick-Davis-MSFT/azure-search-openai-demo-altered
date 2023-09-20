@@ -22,7 +22,7 @@ class ChatReadRetrieveReadApproach(Approach):
     (answer) with that prompt.
     """
     system_message_chat_conversation =  os.environ.get("AZURE_AOAI_SYSTEM_PROMPT") or """
-<|im_start|>
+###
 You are the Assistant called Document Chat for Government. \n
 The Assistant helps the company employees with document questions, and questions about the searched documents. Be brief in your answers.\n
 Answer ONLY with the facts listed in the list of sources below. Do NOT answer with general knowledge.\n
@@ -35,16 +35,22 @@ Each source has a name followed by colon and the actual information, always incl
 Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].\n
 {follow_up_questions_prompt}
 {injected_prompt}    
-<|im_end|>
+###
 """
-    follow_up_questions_prompt_content =  os.environ.get("AZURE_AOAI_FOLLOWUP_PROMPT") or """You are the Assistant called Document Chat for Government. 
+    follow_up_questions_prompt_content =  os.environ.get("AZURE_AOAI_FOLLOWUP_PROMPT") or """
+    ###
+    You are the Assistant called Document Chat for Government. 
 Answer ONLY with the facts listed in the list of sources below. Do NOT answer questions about people or places.
 Generate three very brief follow-up questions that the user would likely ask next about the sources used in the answers. 
 Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
 Try not to repeat questions that have already been asked.
-Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
+Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'
+###
+"""
 
-    query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about the provided documents.
+    query_prompt_template = """
+    ###
+    Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about the provided documents.
 Generate a search query based on the conversation and the new question. 
 Do not search for people names, places or other private information.
 Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
@@ -52,6 +58,7 @@ Do not include any text inside [] or <<>> in the search query terms.
 Do not include any special characters like '+'.
 If the question is not in English, translate the question to English before generating the search query.
 If you cannot generate a search query, return just the number 0.
+###
 """
     query_prompt_few_shots = [
         {'role' : USER, 'content' : 'What are my health plans?' },
