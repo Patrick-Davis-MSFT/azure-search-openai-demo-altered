@@ -3,7 +3,7 @@ version: '3'
 services:
   govdoc-chat:
     #Image name will need to include [AcRName].azurecr.io/[ImageName]:[Tag]
-    image: govdoc-chat
+    image: IMAGE-NAME
     build:
       context: .
       dockerfile: Dockerfile
