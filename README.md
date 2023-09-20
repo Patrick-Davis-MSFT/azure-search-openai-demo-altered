@@ -46,6 +46,14 @@ The service principal will need the following
 * Storage account - Storage Blob Data Contributor (Reader is not sufficient)
 * Azure OpenAI Service - Cognitive Services User
 
+To build a docker container to build from the root directory use the following command.
+
+`docker build . -t image-name`
+
+To run locally using the docker compose functionality update the environmental variables and image name in the docker-compose.yml file. The enviromental variables values are in the `.azure\[AZD Environment Name]\.env` file. Then run the following command
+
+`docker-compose -f ./docker-compose.yml up`
+
 Add all Azure Developer CLI variables and the additional 2 above to the Docker compose file or the webapp configuration or any combination of the two.
 
 To run through the APIM using the following variable
