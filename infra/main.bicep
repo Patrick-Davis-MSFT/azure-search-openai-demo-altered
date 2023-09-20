@@ -400,5 +400,6 @@ output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = storageContainerName
 output AZURE_STAGING_CONTAINER string = stagingContainerName
 output AZURE_STORAGE_RESOURCE_GROUP string = storageResourceGroup.name
+output AZURE_OPENAI_CHATGPT_MODEL string = chatGptModelName
 
 output BACKEND_URI string = backend.outputs.uri
