@@ -30,7 +30,12 @@ from azure.search.documents.indexes.models import (
 )
 
 from pypdf import PdfReader, PdfWriter
-from tenacity import retry, stop_after_attempt, wait_random_exponential
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 class indexFiles():
     def __init__(self, storageAcct:str, stagingContainer: str, indexContainer: str, formAnalyzer: str,formAnalyzerKey: str, cognitiveSearch: str, embDeployment: str, aoaiService: str):
@@ -276,12 +281,17 @@ class indexFiles():
     def before_retry_sleep(retry_state):
         print("Rate limited on the OpenAI embeddings API, sleeping before retrying...") 
     
-    @retry(wait=wait_random_exponential(min=10, max=60), stop=stop_after_attempt(15), before_sleep=before_retry_sleep)
+    @retry(
+        retry=retry_if_exception_type(openai.error.RateLimitError),
+        wait=wait_random_exponential(min=10, max=60),
+        stop=stop_after_attempt(15),
+        before_sleep=before_retry_sleep
+    )
     def compute_embedding(self, text):
         self.refresh_openai_token()
         print(f"Computing embedding for text of length {len(text)}")
         self.printAPI.put(f"Computing embedding for text of length {len(text)}, This will sleep where needed.")
-        return openai.Embedding.create(engine=self.embDeployment, input=text)["data"][0]["embedding"]
+        return openai.Embedding.create(engine=self.embDeployment, model=self.embDeployment, input=text)["data"][0]["embedding"]
 
     def get_document_text(self, filename: str, blob_service_client: BlobServiceClient, container_client: BlobServiceClient) -> dict:
         offset = 0
@@ -296,18 +306,22 @@ class indexFiles():
         form_recognizer_results = poller.result()
 
         for page_num, page in enumerate(form_recognizer_results.pages):
-            tables_on_page = [table for table in form_recognizer_results.tables if table.bounding_regions[0].page_number == page_num + 1]
+            tables_on_page = [
+                table
+                for table in form_recognizer_results.tables
+                if table.bounding_regions[0].page_number == page_num + 1
+            ]
 
             # mark all positions of the table spans in the page
             page_offset = page.spans[0].offset
             page_length = page.spans[0].length
-            table_chars = [-1]*page_length
+            table_chars = [-1] * page_length
             for table_id, table in enumerate(tables_on_page):
                 for span in table.spans:
                     # replace all table spans with "table_id" in table_chars array
                     for i in range(span.length):
                         idx = span.offset - page_offset + i
-                        if idx >=0 and idx < page_length:
+                        if idx >= 0 and idx < page_length:
                             table_chars[idx] = table_id
 
             # build page text by replacing characters in table spans with table html

@@ -101,7 +101,8 @@ If you cannot generate a search query, return just the number 0.
         filter = "category ne '{}'".format(exclude_category.replace("'", "''")) if exclude_category else None
 
         user_q = "Generate search query for: " + history[-1]["user"]
-
+        sys.stdout.write("retrieval mode: " + str(overrides.get("retrieval_mode")) + '\n')
+        sys.stdout.flush()
         # STEP 1: Generate an optimized keyword search query based on the chat history and the last question
         messages = self.get_messages_from_history(
             self.query_prompt_template,
