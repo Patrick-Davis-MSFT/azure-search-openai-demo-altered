@@ -126,8 +126,8 @@ class indexFiles():
                                 hidden=False, searchable=True, filterable=False, sortable=False, facetable=False,
                                 vector_search_dimensions=1536, vector_search_configuration="default"),
                     SimpleField(name="category", type="Edm.String", filterable=True, facetable=True, sortable=True),
-                    SimpleField(name="sourcepage", type="Edm.String", filterable=True, facetable=True, sortable=True),
-                    SimpleField(name="sourcefile", type="Edm.String", filterable=True, facetable=True, sortable=True)
+                    SearchableField(name="sourcepage", type="Edm.String", filterable=True, facetable=True, analyzer_name="en.microsoft", sortable=True),
+                    SearchableField(name="sourcefile", type="Edm.String", filterable=True, facetable=True, analyzer_name="en.microsoft", sortable=True)
                 ],
                 semantic_settings=SemanticSettings(
                     configurations=[SemanticConfiguration(

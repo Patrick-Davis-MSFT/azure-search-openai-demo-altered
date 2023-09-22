@@ -341,8 +341,8 @@ def create_search_index():
                     vector_search_configuration="default",
                 ),
                 SimpleField(name="category", type="Edm.String", filterable=True, facetable=True),
-                SimpleField(name="sourcepage", type="Edm.String", filterable=True, facetable=True),
-                SimpleField(name="sourcefile", type="Edm.String", filterable=True, facetable=True),
+                SearchableField(name="sourcepage", type="Edm.String", filterable=True, analyzer_name="en.microsoft", facetable=True),
+                SearchableField(name="sourcefile", type="Edm.String", filterable=True, analyzer_name="en.microsoft", facetable=True),
             ],
             semantic_settings=SemanticSettings(
                 configurations=[

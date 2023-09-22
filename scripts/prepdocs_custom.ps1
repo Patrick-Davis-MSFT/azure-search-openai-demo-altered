@@ -22,7 +22,7 @@ if (-not $pythonCmd) {
   $pythonCmd = Get-Command python3 -ErrorAction SilentlyContinue
 }
 
-Write-Host 'Creating python virtual environment "scripts/.venv"'
+Write-Host 'Creating python virtual environment "scripts/.venv" with ' $pythonCmd.Source
 Start-Process -FilePath ($pythonCmd).Source -ArgumentList "-m venv ./scripts/.venv" -Wait -NoNewWindow
 
 $venvPythonPath = "./scripts/.venv/scripts/python.exe"
