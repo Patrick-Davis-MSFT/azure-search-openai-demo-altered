@@ -8,6 +8,10 @@ export class WhiteBoxModel {
     static useWhiteBox: boolean = false;
     static showFileUpload: boolean = true;
 
+    static showThoughtProcess: boolean = false;
+    static showSupportingContent: boolean = true;
+    static showCitation: boolean = true;
+
     //Page View Overrides
     static showDevSettings: boolean = false;
     static showGitHub: boolean = false;
