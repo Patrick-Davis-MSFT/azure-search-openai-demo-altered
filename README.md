@@ -97,10 +97,9 @@ An index is a set of documents scanned for retrieval by Azure Open AI.
 
 ![Add A Index](docs/addIndexName.png)
 
-    1. To add a new Index for documents type in the name of the index in `Add Index to List:`
-      > Indexes names need to be lowercase and letters and dashes only. <i>No numbers or spaces.</i>
-    1. Click `Add`
-    1. Select the name from `Indexes to Load...`
+2-a. To add a new Index for documents type in the name of the index in `Add Index to List:` Indexes names need to be lowercase and letters and dashes only. <i>No numbers or spaces.</i>
+2-b. Click `Add`
+2-c. Select the name from `Indexes to Load...`
 
 ![Index to new Index](docs/IndexingOnNewIndex.png)
 
