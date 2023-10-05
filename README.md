@@ -81,6 +81,35 @@ The repo includes sample data so it's ready to try end to end. In this sample ap
 
 ![Chat screen](docs/chatscreen.png)
 
+### To Upload Documents to the Default Index or a New Search Index
+
+> <b>Note</b>: This functionality may be disabled in the `.\app\frontend\src\components\WhiteBox\WhiteBox.tsx` file 
+
+> Using other indexes requires the selection of that index in the developer settings in order to search on those documents.
+
+An index is a set of documents scanned for retrieval by Azure Open AI. 
+
+1. Click on the File Indexes button
+    ![File Index Button](docs/fileIndexBtn.png)
+1. Select the index to load to. The Default index will be used by default. 
+    1. To add a new Index for documents type in the name of the index in `Add Index to List:`
+      > Indexes names need to be lowercase and letters and dashes only. <i>No numbers or spaces.</i>
+      ![Add A Index](docs/addIndexName.png)
+    1. Click `Add`
+    1. Select the name from `Indexes to Load...`
+        ![Index to new Index](docs/IndexingOnNewIndex.png)
+1. Select `Choose File to upload` to select the files from your hard drive to upload
+    > Only PDFs can be uploaded and only 5 files can be uploaded at a time. Larger PDFs may need to be uploaded individually. 
+1. Click `Upload` to stage the date
+1. Once files are listed in the `Ready for Indexing` section, Press the Upload Index. 
+1. The loading screen will appear and run. Please wait for the completion of the load. 
+
+### To Use a Non-`Default` Index for Searching Uploaded Document
+1. Select Developer settings 
+    ![Developer Settings](docs/devSettings.png)
+1. Select the index for the documents required
+    ![Select An Index](docs/SelectanIndex.png)
+
 ## Getting Started
 
 > **IMPORTANT:** In order to deploy and run this example, you'll need an **Azure subscription with access enabled for the Azure OpenAI service**. You can request access [here](https://aka.ms/oaiapply). You can also visit [here](https://azure.microsoft.com/free/cognitive-search/) to get some free Azure credits to get you started.
