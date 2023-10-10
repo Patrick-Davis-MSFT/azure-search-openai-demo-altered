@@ -158,7 +158,7 @@ def getIndex():
     ensure_openai_token()
     try:
         key = AzureKeyCredential(os.environ.get("AZURE_SEARCH_SERVICE_KEY") or "key")
-        index_client = SearchIndexClient(endpoint=f"https://gptkb-hvozji4axlz54.search.windows.net", credential=key)
+        index_client = SearchIndexClient(endpoint=f"https://{AZURE_SEARCH_SERVICE}.search.windows.net", credential=key)
         retVal = []
         for index in index_client.list_index_names():
             retVal.append({"value": str(index), "label": str(index)})
