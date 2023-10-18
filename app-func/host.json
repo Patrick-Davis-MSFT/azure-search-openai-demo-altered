@@ -1,0 +1,19 @@
+{
+  "version": "2.0",
+  "functionTimeout": "03:00:00",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    }
+  },
+  "Host": {
+    "CORS": "*"
+  },
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[3.15.0, 4.0.0)"
+  }
+}

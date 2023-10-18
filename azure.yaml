@@ -20,6 +20,10 @@ services:
           run:  cd ../frontend;npm install;npm run build
           interactive: true
           continueOnError: false
+  indexFunction:
+    project: ./app-func
+    language: py
+    host: function
 hooks:
     postprovision:
       windows:

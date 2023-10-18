@@ -4,6 +4,8 @@
   "appConfigurationConfigurationStores": "appcs-",
   "appManagedEnvironments": "cae-",
   "appContainerApps": "ca-",
+  "logAnalytics": "la-",
+  "appInsights": "appin-",
   "authorizationPolicyDefinitions": "policy-",
   "automationAutomationAccounts": "aa-",
   "blueprintBlueprints": "bp-",

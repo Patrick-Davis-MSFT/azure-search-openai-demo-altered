@@ -1,13 +1,14 @@
-import { CommandButton, ContextualMenu, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, IDragOptions, IDropdownOption, List, Modal, Panel, Stack, Text, TextField, mergeStyles } from "@fluentui/react";
+import { Checkbox, CommandButton, ContextualMenu, DefaultButton, Dropdown, FocusZone, FocusZoneDirection, IDragOptions, IDropdownOption, List, Modal, Panel, Stack, Text, TextField, mergeStyles } from "@fluentui/react";
 //using https://github.com/Jaaneek/useFilePicker
 import { useId, useBoolean } from '@fluentui/react-hooks';
 
 
 import styles from "./FilePanel.module.css";
-import { MouseEventHandler, useEffect, useRef, useState } from "react";
-import { OptResponse, OptResponses, ReadyFile, RetrievalMode, getIndexesAPI, getReadyFiles, indexReadyFiles, indexReadyFilesStream, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, } from "../../../api";
+import { ChangeEvent, MouseEventHandler, useEffect, useRef, useState } from "react";
+import { OptResponse, OptResponses, ReadyFile, RetrievalMode, getIndexesAPI, getReadyFiles, indexReadyFiles, indexReadyFilesStream, postFile, postFile2, removeStagedFile, streamToBlob, uploadBlob, uploadTriggerAPI, } from "../../../api";
 import { Document24Regular, Delete24Regular } from "@fluentui/react-icons";
 import React from "react";
+import * as uuid from "uuid";
 
 interface Props {
     className?: string;
@@ -28,6 +29,7 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
     const [addIndex, setAddIndex] = useState<string>("" as string);
     const [disableAddIndex, setDisableAddIndex] = useState<boolean>(false);
     const [streamOutput, setStreamOutput] = useState<string>("");
+    const [selectedFiles, setSelectedFiles] = useState<string[]>([] as string[]);
 
 
     useEffect(() => {
@@ -47,6 +49,7 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
 
     const setReadyFileList = async () => {
         const fileIdx = await getReadyFiles();
+        setSelectedFiles(fileIdx.map((item) => item.name));
         setUploadedFileList(fileIdx);
         return true;
     };
@@ -78,9 +81,30 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         setError(null);
         setUploadIndexDisabled(false);
     };
+
+    const uploadTrigger = async (trigger: string) => {
+        try {
+            showModal();
+            const id: string = uuid.v4();
+            const retValue = await uploadTriggerAPI(trigger, id + "!!!indexThis.json");
+            await setReadyFileList();
+            await delay(2500);
+            hideModal();
+        }
+        catch (error: any) {
+            console.log(error);
+            alert(`An error occurred: ${error.message}`);
+            setError(error.message);
+            hideModal();
+        }
+        setError("Indexing Files... Please Wait");
+        setUploadIndexDisabled(true);
+    }
     const indexFilesPress = () => {
         setUploadIndexDisabled(true);
-        return callIndexFiles();
+        const tmp = { "index": searchIndex.value, "files": selectedFiles };
+        //return callIndexFiles();
+        return uploadTrigger(JSON.stringify(tmp));
     };
 
     useEffect(() => {
@@ -100,14 +124,39 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
         }
         removeStagedItem(name);
     }
+
+    const onChangeFileCheckbox = (ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean, token?: string) => {
+        const value = token;
+        if (!value) return;
+        if (checked) {
+            var tmp = selectedFiles;
+            tmp.push(value);
+            setSelectedFiles(tmp);
+        } else {
+            var tmp = selectedFiles.filter(x => x !== value);
+            setSelectedFiles(tmp);
+        }
+    };
     const onRenderCellFiles = (item?: ReadyFile, index?: number | undefined): JSX.Element | null => {
         if (!item) return null;
         console.log(item);
+        if (!selectedFiles.includes(item.name)) {
+            selectedFiles.push(item.name);
+        }
+        if (item.name.endsWith(".json")) {
+            setUploadIndexDisabled(true);
+            setError("Indexing in Progress... Please Wait");
+        }
         return (<>
             <div className={styles.fileOptContainer}>
-                <span className={styles.fileOption}><Document24Regular />
-                    <Text variant="large">{item.name}</Text>
-                    <CommandButton onClick={() => removeItem(item.name)}><Delete24Regular />
+                <span className={styles.fileOption}>
+                    <Checkbox
+                        label={"Index " + item.name + "?"}
+                        defaultChecked={selectedFiles.includes(item.name)}
+                        onChange={(ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => onChangeFileCheckbox(ev, checked, item.name)}
+                        key={item.name}
+                    />
+                    <CommandButton onClick={() => removeItem(item.name)}><Delete24Regular /> Delete?
                     </CommandButton>
                 </span>
             </div>
@@ -227,7 +276,7 @@ export const FilePanel = ({ className, show, close, setIndex }: Props) => {
                 <h3>Ready for Indexing</h3>
                 <div>
 
-                    <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled || uploadedFileList.length == 0}>Upload Index</DefaultButton>
+                    <DefaultButton className={styles.buttonSpace} onClick={() => indexFilesPress()} disabled={uploadIndexDisabled || uploadedFileList.length == 0 || selectedFiles.length == 0}>Upload Index</DefaultButton>
                     <List items={uploadedFileList} onRenderCell={onRenderCellFiles} />
                     {error ? <Text variant="large" style={{ color: "red" }}>{error}</Text> : null}
                 </div>

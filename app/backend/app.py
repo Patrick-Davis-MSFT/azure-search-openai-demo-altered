@@ -72,7 +72,10 @@ CACHE_KEY_TOKEN_TYPE = 'token_type'
 # just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the 
 # keys for each service
 # If you encounter a blocking error during a DefaultAzureCredntial resolution, you can exclude the problematic credential by using a parameter (ex. exclude_shared_token_cache_credential=True)
+#logging.basicConfig(level=logging.DEBUG)
+#azure_credential = DefaultAzureCredential(exclude_shared_token_cache_credential = True, logging_enable=True)
 azure_credential = DefaultAzureCredential(exclude_shared_token_cache_credential = True)
+
 
 # Used by the OpenAI SDK
 openai.api_type = "azure"
@@ -215,6 +218,9 @@ def indexes():
         container_client = blob_service_client.get_container_client(AZURE_STAGING_CONTAINER) 
         blobs = container_client.list_blobs()
         files = [] 
+
+        if not blobs:
+            return jsonify(files)
         for blob in blobs:
             files.append({
                 "size": blob.size, 
@@ -266,6 +272,27 @@ def upload():
         return jsonify({"result":"File uploaded to Azure Storage!"})
     except Exception as e:
         logging.exception("Exception in /upload")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/writestringtofile", methods=["POST"])
+def writeStringToFile():
+    ensure_openai_token()
+    if not request.json:
+        return jsonify({"error": "request must be json"}), 400
+    
+    try:
+        fileName = request.json["fileName"]
+        fileContent = request.json["fileContent"]
+        
+        sys.stdout.write(fileContent)
+        sys.stdout.flush()
+        blob_service_client = BlobServiceClient(account_url=f"https://" + AZURE_STORAGE_ACCOUNT + ".blob.core.windows.net", credential=azure_credential)
+        container_client = blob_service_client.get_container_client(AZURE_STAGING_CONTAINER)
+        blob_client = container_client.get_blob_client(fileName)
+        blob_client.upload_blob(fileContent, overwrite=True)
+        return "{fileName} uploaded to Azure Storage!"
+    except Exception as e:
+        logging.exception("Exception in /writestringtofile")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/indexUploadedFilesStream", methods=["POST"])

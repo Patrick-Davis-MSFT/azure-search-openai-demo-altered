@@ -107,7 +107,11 @@ An index is a set of documents scanned for retrieval by Azure Open AI.
     > Only PDFs can be uploaded and only 5 files can be uploaded at a time. Larger PDFs may need to be uploaded individually. 
 1. Click `Upload` to stage the date
 1. Once files are listed in the `Ready for Indexing` section, Press the Upload Index. 
-1. The loading screen will appear and run. Please wait for the completion of the load. 
+1. The loading screen will appear. 
+1. Once started the a new file will be added to the Indexing Files called `[UID]!!!IndexThis.json`.
+1. If there is an error on the Function app in the Azure Logs or the function failed. Remove the `IndexThis` file and Press `Upload Index` again to restart.
+1. The function will automatically time out after 3 hours but will retry up to 5 times. Indexing can take some time.
+1. As the files get indexed the files will be removed from the list.
 
 ### To Use a Non-`Default` Index for Searching Uploaded Document
 1. Select Developer settings 
@@ -137,6 +141,7 @@ An index is a set of documents scanned for retrieval by Azure Open AI.
 * [Powershell 7+ (pwsh)](https://github.com/powershell/powershell) - For Windows users only.
   * **Important**: Ensure you can run `pwsh.exe` from a PowerShell command. If this fails, you likely need to upgrade PowerShell.
 * [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install)
+* [Azure Functions Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) or [Azure Core Tools](https://www.npmjs.com/package/azure-functions-core-tools) for locally running the function app for indexing
 
 >NOTE: Your Azure Account must have `Microsoft.Authorization/roleAssignments/write` permissions, such as [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator) or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#owner).  
 
@@ -193,9 +198,17 @@ If you've changed the infrastructure files (`infra` folder or `azure.yaml`), the
 
 #### Running locally
 
+##### Web App
 1. Run `azd auth login`
 2. Change dir to `app`
 3. Run `./start.ps1` or `./start.sh` or run the "VS Code Task: Start App" to start the project locally.
+
+##### Function App (For Indexing)
+> Remember to Stop the Azure Function that is deployed in Azure to prevent the triggers from double firing 
+1. Open a new Powershell Terminal. 
+1. If not done so run `azd auth login`
+1. Change directories to `app-func`
+1. Run the command `./start.ps1`
 
 #### Sharing Environments
 

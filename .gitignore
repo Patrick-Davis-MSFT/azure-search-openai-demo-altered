@@ -1,3 +1,27 @@
+bin
+obj
+csx
+.vs
+edge
+Publish
+
+*.user
+*.suo
+*.cscfg
+*.Cache
+project.lock.json
+
+/packages
+/TestResults
+
+/tools/NuGet.exe
+/App_Data
+/secrets
+/data
+.secrets
+appsettings.json
+local.settings.json
+
 # Ignore custom data files
 data_custom/
 
@@ -104,6 +128,7 @@ ipython_config.py
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
+.python_packages/
 
 # Celery stuff
 celerybeat-schedule
@@ -149,3 +174,8 @@ cython_debug/
 npm-debug.log*
 node_modules
 static/
+
+# Azurite artifacts
+__blobstorage__
+__queuestorage__
+__azurite_db*__.json

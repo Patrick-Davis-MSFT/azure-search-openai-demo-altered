@@ -56,3 +56,5 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
 
 output name string = storage.name
 output primaryEndpoints object = storage.properties.primaryEndpoints
+#disable-next-line outputs-should-not-contain-secrets 
+output key string = storage.listKeys().keys[0].value

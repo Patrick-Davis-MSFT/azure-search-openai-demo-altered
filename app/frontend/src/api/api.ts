@@ -125,6 +125,24 @@ export  async function uploadBlob(blob: Blob, fName: string): Promise<void> {
     });
   }
 
+export async function uploadTriggerAPI(content: string, fileName: string): Promise<string> {
+    
+    const response = await fetch("/writestringtofile", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({"fileContent": content, "fileName": fileName})
+    });
+
+    const parsedResponse: string = await response.text();
+    if (response.status > 299 || !response.ok) {
+        throw Error("Uploading File: Unknown error");
+    }
+
+    return parsedResponse;
+}
+
 export async function removeStagedFile(fileName: string): Promise<void> {
     const response = await fetch("/removeStagedFile", {
         method: "POST",
@@ -221,10 +239,12 @@ export async function indexReadyFiles(targetIndex: string): Promise<String> {
 }
 
 export async function indexReadyFilesStream(targetIndex: string, setReturn: (result: string) => void): Promise<void> {
-    const response = await fetch("/indexUploadedFilesStream", {
+    const response = await fetch("https://testpythonfunction-1023938.azurewebsites.net/api/indexfun", {
+        //const response = await fetch("http://localhost:7071/api/indexfun", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
+            //,"x-functions-key": "tsEYb3xxbaUMuCUqGmW9rw1AZs2XOfb_Pb8cNrN2ZgwAAzFuvtYiwA=="
         },
         body: JSON.stringify({
             index: targetIndex,

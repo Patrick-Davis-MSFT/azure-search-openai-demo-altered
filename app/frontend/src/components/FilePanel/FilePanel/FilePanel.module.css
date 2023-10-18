@@ -50,3 +50,8 @@
     flex-direction: column-reverse;
     font-size: medium;
  }
+ .fileOption {
+    display: inline-block;
+    padding-top:5px;
+    border-bottom: 1px solid black;
+ }
