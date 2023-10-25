@@ -268,15 +268,15 @@ Here are the most common failure scenarios and solutions:
 
 1. The following roles require assignments. If it is not possible to be an administrator on the subscription you should be allowed to assign these roles to service principals 
 
-``` bash 
-5e0bd9bd-7b93-4f28-af87-19fc36ad61bd
-a97b65f3-24c7-4388-baec-2e87135dc908
-2a2b9908-6ea1-4ae2-8e65-a410df84e7d1
-ba92f5b4-2d11-453d-a403-e96b0029c9fe
-1407120a-92aa-4202-b7e9-c0e197c71c8f
-8ebe5a00-799e-43f5-93ac-243d3dce84a7
-7ca78c08-252a-4471-8644-bb5ff32d4ba0
-```
+      ``` bash 
+      5e0bd9bd-7b93-4f28-af87-19fc36ad61bd
+      a97b65f3-24c7-4388-baec-2e87135dc908
+      2a2b9908-6ea1-4ae2-8e65-a410df84e7d1
+      ba92f5b4-2d11-453d-a403-e96b0029c9fe
+      1407120a-92aa-4202-b7e9-c0e197c71c8f
+      8ebe5a00-799e-43f5-93ac-243d3dce84a7
+      7ca78c08-252a-4471-8644-bb5ff32d4ba0
+      ```
 
 1. You've exceeded a quota, most often number of resources per region. See [this article on quotas and limits](https://aka.ms/oai/quotas).
 
