@@ -75,14 +75,14 @@ class indexFiles():
         self.open_ai_token_cache[self.CACHE_KEY_TOKEN_CRED] = azure_credential
         self.open_ai_token_cache[self.CACHE_KEY_TOKEN_TYPE] = "azure_ad"
         
-        logging.info("Stage 1 Chunking...")
-        # Split PDF files into pages
-        self.splitPDF(container_client, upload_client, files)
 
-        
-        logging.info("Stage 2 Check Index...")
+        logging.info("Stage 1 Check Index..1.")
         #check if index exists
         self.create_index(azure_credential)
+
+        logging.info("Stage 2 Chunking...")
+        # Split PDF files into pages
+        self.splitPDF(container_client, upload_client, files)
 
         logging.info("Stage 3 Indexing...")
         # Index PDF files then delete them from staging
@@ -361,8 +361,6 @@ class indexFiles():
 
     def splitPDF(self, staging_cc, search_cc, files) -> None:
         
-        files = []
-        
         print("before loop\n")
         for blob in files:
         # get the blob to bytes
@@ -388,8 +386,6 @@ class indexFiles():
                     writer.write(f)
                     f.seek(0)
                     search_cc.upload_blob(blob_name, f, overwrite=True)
-                    files.append(blob_name)
             else:
                 search_cc.upload_blob(blob, blob, overwrite=True)
-                files.append(blob)
         
